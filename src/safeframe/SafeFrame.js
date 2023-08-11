@@ -20,23 +20,7 @@
  * @return {object} Returns this object.
  */
 Adhese.prototype.SafeFrame.prototype.init = function() {
-
-	// make config object for already known positions
-	this.adhesePositionConfig = new Object();
-
-	if (this.ads && this.ads.length>0) {
-		for (index in this.ads) {
-			var ad = this.ads[index];
-			this.adhesePositionConfig[ad[this.containerID]] = {
-				"w": ad.width,
-				"h": ad.height,
-				"size" : ad.width+"x"+ad.height,
-				"dest":	ad[this.containerID],
-				"tgt": "_blank"
-			};
-		}
-	}
-  
+ 
 	// create a config
 	var conf = new $sf.host.Config({
 		auto: false,
