@@ -40,21 +40,14 @@
 
  	if (options.account) {
  		this.config.account = options.account;
- 		var protocol = "http:";
+ 		var protocol = "https:";
  		if (window.location.protocol != "file:") {
  			protocol = window.location.protocol;
 		}
-		if (!options.prefixVersion || (options.prefixVersion && options.prefixVersion==1)) {
-			this.config.host = protocol + "//ads-" + options.account + ".adhese.com/";
-			this.config.poolHost = protocol + "//pool-" + options.account + ".adhese.com/";
-			this.config.clickHost = protocol + "//click-" + options.account + ".adhese.com/";
-		} else if (options.prefixVersion && options.prefixVersion==2) {
-			this.config.host = protocol + "//ads-" + options.account + ".adhese.com/";
-			this.config.poolHost = protocol + "//pool-" + options.account + ".adhese.com/";
-			this.config.clickHost = protocol + "//ads-" + options.account + ".adhese.com/";
-		} 
- 		 
-		 this.config.previewHost = "https://" + options.account + "-preview.adhese.org/";
+		this.config.host = protocol + "//ads-" + options.account + ".adhese.com/";
+		this.config.poolHost = protocol + "//pool-" + options.account + ".adhese.com/";
+		this.config.clickHost = protocol + "//ads-" + options.account + ".adhese.com/";
+ 		this.config.previewHost = "https://" + options.account + "-preview.adhese.org/";
  		this.config.hostname = undefined;
  	} else if (options.host && options.poolHost) {
 		this.config.host = options.host;
@@ -117,10 +110,6 @@
     if(options.previewExclusive) this.config.previewExclusive = options.previewExclusive;
 	this.checkPreview();
 	this.checkAdheseInfo();
-    if(this.checkVisible){
-        addEventListener("load", this.checkVisible.bind(this), false);
-        addEventListener("scroll", this.checkVisible.bind(this), false);
-    }
 
  	this.helper.log('Adhese: initialized with config:', JSON.stringify(this.config));
  };
