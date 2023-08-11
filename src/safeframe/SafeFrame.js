@@ -7,7 +7,7 @@
 	this.containerID = "adType";
 	if (containerID) this.containerID = containerID;
 	this.viewability = viewabilityTracking;
-	if (this.viewability) Adhese.prototype.enableViewabilityTracking(this, this.viewability);
+	if (this.viewability) Adhese.prototype.enableViewabilityTracking(this, this.viewability.settings);
 	this.adhesePositions = new Array();
 	this.ads = [];
 	this.logMessages = messages || '';
