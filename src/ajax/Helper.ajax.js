@@ -85,7 +85,7 @@ var AdheseAjax = {
                 if(ops.headers && typeof ops.headers == 'object') {
                     this.setHeaders(ops.headers);
                 }
-                setTimeout(function() {
+                //setTimeout(function() {
                     if(ops.method == 'get'){
                         self.xhr.send()
                     }else{
@@ -97,7 +97,7 @@ var AdheseAjax = {
                        }
                        self.xhr.send(data);
                    }
-                }, 20);
+               // }, 20);
                 return this;
             },
             done: function(callback) {

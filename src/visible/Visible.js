@@ -1,38 +1,60 @@
-if(!window.AdheseVisibleData){
-    window.AdheseVisibleData = [];
-}
+/**
+* This function is used for viewability measurement and makes use of the IntersectionObserver API. Default settings are based on IAB.
+* @param  {object} target   Object to which we will add the observer. Can be the safeframe object or another one.
+* @param  {object} settings Viewability settings such as duration and in view percentage. When set to true, default IAB settings will be used.
+*/
+Adhese.prototype.enableViewabilityTracking = function (target, settings) {
 
-Adhese.prototype.checkVisible = function() {
-    var that = this;
-    var ads = new Array();
-    var visibleIndex = 0;
-    for (var i = 0; i < window.AdheseVisibleData.length; i++) {
-        visibleIndex = i;
-        ads[i] = window.AdheseVisibleData[i];
-        var el = document.getElementById(ads[i].uid);
-        if (el) {
-            var rect = el.getBoundingClientRect();
-            ads[i].visible = rect.height > 0 && rect.width > 0 && rect.top + (rect.height *.5) >= 0 && rect.left + (rect.width *.5) >= 0 && rect.bottom - rect.height * .5 <= (window.innerHeight || document.documentElement.clientHeight) && rect.right - rect.width * .5 <= (window.innerWidth || document.documentElement.clientWidth);
-            if (ads[i].visible && !ads[i].active && !ads[i].tracked) {
-                if(ads[i].inviewTracker){ // check if there is an inviewTracker
-                    that.track(ads[i].inviewTracker);
-                }
-                ads[i].active = true;
-                ads[i].out = setTimeout(function(activeAd) {
-                        that.track(activeAd.visibleTracker);
-                        activeAd.tracked = true;
-                        window.AdheseVisibleData.splice(window.AdheseVisibleData.indexOf(activeAd), 1);
-                    },
-                    1000, // 1 second
-                    ads[i] //activeAd param
-                );
-            } else if (!ads[i].visible && ads[i].active) {
-                clearTimeout(ads[i].out);
-                ads[i].active = false;
-            }
-        } else {
-            this.helper.log("Can't find <div> width id: " + ads[i].uid);
-            ads[i].tracked = true;
-        }
-    }
+	target.viewability = {
+		contentBox: document.querySelector("body"),
+		trackers: {},
+		trackerTimeout: 0
+	}
+
+	observerOptions = {
+		root: null,
+		rootMargin: "0px",
+		threshold: []
+	};
+
+	if (typeof settings === 'object' && settings !== null) {
+		settings.inViewPercentage ? observerOptions.threshold.push(settings.inViewPercentage) : observerOptions.threshold.push(0.5);
+		if (settings.rootMargin) {
+			observerOptions.rootMargin = settings.rootMargin;
+		}		
+		target.viewability.trackerTimeout = settings.duration && settings.duration !== '' ? settings.duration : 1;
+		target.viewability.inViewPercentage = observerOptions.threshold[observerOptions.threshold.length-1];
+	} else {
+		observerOptions.threshold.push(0.5);
+		target.viewability.trackerTimeout = 1;
+		target.viewability.inViewPercentage = observerOptions.threshold[observerOptions.threshold.length-1];
+	}
+
+	target.viewability.intersectionCallback = function (entries) {
+		entries.forEach(function (entry) {
+			var adBox = entry.target;
+			if (entry.isIntersecting) {
+				if (entry.intersectionRatio >= target.viewability.inViewPercentage && target.viewability.trackerTimeout > 0) {
+					adBox.timerRunning = true;
+					adBox.timer = window.setTimeout(function () {
+						target.viewability.adObserver.unobserve(adBox);
+						if (target.viewability.trackers[adBox.id]) {
+                            target.helper.log("Firing Viewabilty Tracking pixel for: "+adBox.id);
+							target.helper.addTrackingPixel(target.viewability.trackers[adBox.id]);
+						}						
+					}, target.viewability.trackerTimeout * 1000);
+				} else if (entry.intersectionRatio >= target.viewability.inViewPercentage) {
+					target.viewability.adObserver.unobserve(adBox);
+					if (target.viewability.trackers[adBox.id]) {
+                        target.helper.log("Firing Viewabilty Tracking pixel for: "+adBox.id);
+						target.helper.addTrackingPixel(target.viewability.trackers[adBox.id]);
+					}
+				} 
+			} else if (adBox.timerRunning) {
+					window.clearTimeout(adBox.timer);
+					adBox.timerRunning = false;
+			}
+		});
+	}
+	target.viewability.adObserver = new IntersectionObserver(target.viewability.intersectionCallback, observerOptions);
 };

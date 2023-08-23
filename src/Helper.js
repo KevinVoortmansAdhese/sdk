@@ -4,6 +4,7 @@
  * @return {Object}
  */
  Adhese.prototype.Helper = function() {
+	 this.debugEnabled = false;
 	 this.oslist = [
 		 {
 			 string: navigator.userAgent,
@@ -134,7 +135,12 @@
 	var logTime = new Date().getTime();
 	for (var i = 0, a = arguments; i < a.length; i++) {
 		if (a[i]) {
-			logArgs += a[i] + ' ';
+			if (typeof a[i] === "object"){
+				logArgs += JSON.stringify(a[i]) + ' ';
+			}else{
+				logArgs += a[i] + ' ';
+			}
+			
 		}
 	}
 	this.logObjs[logTime] = logObj = {
@@ -142,11 +148,13 @@
 	};
 	//this.logs.push(logTime + ": " + logArgs);
 	this.logs.push([logTime, arguments]);
-	if (window.location.search.match("debug")) {
-		console.log(logTime, arguments)
+	if (window.location.search.match("debug") || this.debugEnabled ) {
+		//console.log(logTime, arguments)
+		for (var index in arguments){
+			console.log("%cAdhese log", 'background: #222; color: #bada55; padding:3px;',logTime, arguments[index])
+		}
 	};
 };
-
 
 /*helper.debug()
 prints all log messages
@@ -156,7 +164,7 @@ prints all log messages
 Adhese.prototype.Helper.prototype.debug = function() {
 	for (var i in this.logs) {
     var l = this.logs[i];
-		console.log(l[0], l[1]);
+		console.log("%cAdhese log", 'background: #222; color: #bada55; padding:3px;',l[0], l[1])
 	}
 };
 Adhese.prototype.Helper.prototype.debugTable = function() {

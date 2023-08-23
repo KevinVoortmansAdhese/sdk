@@ -26,8 +26,8 @@
 	} else {
 		this.containerId = "";
 	}
-	this.options.slotName = this.getSlotName(adhese);
-	this.containingElementId = this.getContainingElementId();
+	this.slotName = this.getSlotName(this);
+	this.containingElementId = options.containingElementID;
 	if (options && options.parameters) this.parameters = options.parameters;
 	else this.parameters = {};
  	return this;

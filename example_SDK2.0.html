@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>Adhese SDK Tagging Examples</title>
+	
+	<style type="text/css" media="screen">
+		#leaderboard { width:728px; height: 90px; }
+		#imu { width: 300px; height: 250px; padding: 0px;}
+	</style>
+</head>
+
+<body>
+	<!-- <div style="background-color: red; height: 2000px;"></div> -->
+	<!-- SYNCHROON-->
+	<div class="adunit" data-format="leaderboard" data-parameters='{"hv":"hallo", "hw":["hey", "hoe", "ist"]}'></div>
+	<!-- <div class="adunit" data-format="leaderboard"></div> -->
+	<!-- <script type="text/javascript" charset="utf-8">
+		adhese.tag("leaderboard", {
+			write:true, // if true the ad will be inserted into the DOM on creation, using Javascript's document.write function
+			location: "",// An optional string that identifies this Ad's location. Beware, this will overwrite the global Adhese.location property for this Ad.
+			position: "",  //An optional string defining this Ad's position. The string will be added to Adhese.location to identifiy this Ad. Intended for using the same formatCode more than once in the same location.
+ 			containerId: "", //An optional string defining this Ad's container, intended to be used in pages where the same slot is requested multiple times and needs to be visualised in a different element (ex.: endlessly scrolling web pages)
+			parameters: {} //An optional object containing target parameters for this ad. The object keys are the request prefixes, the values an array of strings or ints.
+		});
+	</script> -->
+	
+	<div style="background-color: red; height: 2000px;"></div>
+	<div class="adunit" data-format="300x250" data-slot="bottom1"></div>
+	<div style="background-color: blue; height: 2000px;"></div>
+	<div class="adunit" data-format="300x250"></div>
+
+
+	<!-- ASYNCHROON-->
+	<!-- <script type="text/javascript" charset="utf-8">		
+		var adArray = new Array();
+		adArray.push(adhese.tag("300x250", {
+			write:true, // if true the ad will be inserted into the DOM on creation, using Javascript's document.write function
+			location: "",// An optional string that identifies this Ad's location. Beware, this will overwrite the global Adhese.location property for this Ad.
+			position: "",  //An optional string defining this Ad's position. The string will be added to Adhese.location to identifiy this Ad. Intended for using the same formatCode more than once in the same location.
+ 			containerId: "imu", //An optional string defining this Ad's container, intended to be used in pages where the same slot is requested multiple times and needs to be visualised in a different element (ex.: endlessly scrolling web pages)
+			parameters: {} //An optional object containing target parameters for this ad. The object keys are the request prefixes, the values an array of strings or ints.
+		}));
+		
+			// AdheseAjax.request({
+			// 	url: adhese.getMultipleRequestUri(adArray, {'type':'json'}),
+			// 	method: 'get',
+			// 	json: true
+			// })
+			// .done(function(result) {
+			// 	adhese.safeframe.addPositions(result);
+			// 	for (var i = result.length - 1; i >= 0; i--) {
+			// 		adhese.safeframe.render(result[i].adType);
+			// 	};    		
+			// });
+		
+	</script> -->
+	<script type="text/javascript" charset="utf-8" src="dist/adhese_2.0.src.js"></script>
+	<script type="text/javascript">
+		function getLocation() {
+			return "_demo_";
+		}
+				
+		/* REMARKS 
+		- Het lijkt erop dat er geen impressie pixel wordt afgevuurd ? 
+		- 
+
+		*/
+
+
+		// create Adhese object and initialize
+		var adhese = new Adhese();
+		adhese.init({
+			debug: true,//for setting debug logging, not intended for production use
+			account: "demo",//the identification of your Adhese account, available through the support portal.
+			host: "https://ads-demo.adhese.com/",//(optional) the host of your adhese account, available in your support account
+			poolHost: "https://pool-demo.adhese.com/", //(optional) the host of your CDN
+			location:  getLocation(),//can be either a string containing the actual location to be passed to the adserver or a function to be called to retrieve the location
+			safeframe: false, //true/false, for switching on the use of the IAB SafeFrame standard, the default value is false
+			//safeframeContainerID: "destination",//string containing the object property of Ad to be used as id for the safeframe container
+			referrer: true,  //true/false,for adding the document.referrer to the req as a base64 string, the default value is true
+			url: true, //true/false, for adding the window.location.href to the req as a base64 string, the default value is true
+			//viewabilityTracking: false, // can be true(standard settings) / false / custom settings
+			viewabilityTracking: { // can be true(standard settings) / false / custom settings
+				settings: { 
+					inViewPercentage: '0.5', // how much of the ad should be visible
+					duration: 1, // min length the ad should be on screen
+					rootMargin: '0px' // extra space to take into account when calculating inview percentage
+				} 
+			},
+			// lazyloading: true
+			lazyloading: {
+				settings: {
+					rootMargin: '200px', // extra space to take into account when rendering positions. Default = 200px
+					parent: null, // Parent object which to check against to see if the ad position is viewable - Default = null = viewport 
+					threshold : 1 // Either a single number or an array of numbers which indicate at what percentage of the target's visibility the observer's callback should be executed. Default = 1.0
+				}
+			},
+			requestType: "POST", // GET / POST - 
+			parameters: { // object with all the keyvalue parameters that need to be added to the request.
+				ag: 40,
+				tm: "hello",
+				ft: ["value1", "value2"]
+			}
+		});		
+	</script>	
+</body>
+</html>

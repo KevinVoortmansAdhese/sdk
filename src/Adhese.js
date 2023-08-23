@@ -10,6 +10,7 @@
  	this.that = this;
  	this.helper = new this.Helper();
  	this.detection = new this.Detection();
+	this.formatCount = {};
  	return this;
  }
 
@@ -33,8 +34,8 @@
  * @return {void}
  */
  Adhese.prototype.init = function(options) {
- 	this.config.debug = options.debug;
-  	this.helper.log("Adhese: initializing...");
+ 	this.helper.debugEnabled = typeof options.debug !== "undefined" ? options.debug : false;
+  	this.helper.log("-----------------------------------Adhese: initializing... -------------------------------------------------");
 
  	this.config.jquery =  typeof jQuery !== 'undefined';
 
@@ -58,26 +59,27 @@
 		adHost.href = this.config.host;
 		this.config.hostname = adHost.hostname;
  	}
-
+	this.config.requestType = typeof options.requestType !== "undefined" ? options.requestType : "POST";
 	if (options.previewHost) {
 		this.config.previewHost = options.previewHost;
 	}
 
  	if (options.location && typeof options.location=="function"){
  		this.config.location = options.location();
-     	this.helper.log('options.location=="function"')
  	} else if (options.location && typeof options.location=="string"){
  		this.config.location = options.location;
-     	this.helper.log('options.location=="string"')
   } else {
     	this.config.location = 'testlocation'
 	}
 	
 	if (options.viewabilityTracking) {
-			this.config.viewabilityTracking = options.viewabilityTracking
+		this.config.viewabilityTracking = options.viewabilityTracking
+		this.enableViewabilityTracking(this, options.viewabilityTracking.settings)
 	} else {
-			this.config.viewabilityTracking = false;
+		this.config.viewabilityTracking = false;
 	}
+
+	this.config.lazyloading = options.lazyloading ? options.lazyloading : false;
 
  	if (typeof options.safeframe == 'undefined' || options.safeframe == false) {
  		this.config.safeframe = false;
@@ -106,12 +108,28 @@
       	this.registerRequestParameter('dt', this.detection.device());
       	this.registerRequestParameter('br', this.detection.device());
   	}
+
+	if(options.parameters) {
+		for(key in options.parameters){
+			this.helper.log("adding keyvalue: " + key + " with values: " +options.parameters[key])
+			if(Array.isArray(options.parameters[key])){
+				for (var p in options.parameters[key]) {
+					this.registerRequestParameter(key, options.parameters[key][p]);
+				}
+			}else{
+				this.registerRequestParameter(key, options.parameters[key]);
+			}
+		}
+	}
+
     this.config.previewExclusive = false;
     if(options.previewExclusive) this.config.previewExclusive = options.previewExclusive;
 	this.checkPreview();
 	this.checkAdheseInfo();
 
- 	this.helper.log('Adhese: initialized with config:', JSON.stringify(this.config));
+ 	this.helper.log('Adhese: initialized with config:', this.config);
+	this.ads = this.FindSlots(this.config);
+	this.requestAds();
  };
 
 Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
@@ -177,53 +195,53 @@ Adhese.prototype.addRequestString = function(value) {
  * @param  {object} options An object containing the configuration of the Adhese.Ad object to be created. See Adhese.Ad documentaion for a full list of options.
  * @return {object}	The newly created Ad object.
  */
- Adhese.prototype.tag = function(formatCode, options) {
-	var that = this;
- 	this.helper.log(formatCode, JSON.stringify(options));
+//  Adhese.prototype.tag = function(formatCode, options, slotName) {
+// 	var that = this;
+//  	//this.helper.log(formatCode, options);
 
-	// if safeframe, check and init
-	if (options && options.safeframe) {
-		if (options.safeframeContainerID) {
-			this.initSafeFrame(options.safeframeContainerID);
-		} else {
-			this.initSafeFrame();
-		}
-	}
+// 	// if safeframe, check and init
+// 	if (options && options.safeframe) {
+// 		if (options.safeframeContainerID) {
+// 			this.initSafeFrame(options.safeframeContainerID);
+// 		} else {
+// 			this.initSafeFrame();
+// 		}
+// 	}
 
-  	var ad = new this.Ad(this, formatCode, options);
+//   	var ad = new this.Ad(this, formatCode, options);
 	 	
-	if (this.previewActive) {
-		var pf = this.previewFormats
-	   for (var key in pf) {
-		   if (key  == formatCode + (options.position?options.position:"")) {
-			   var previewformat = pf[formatCode + (options.position?options.position:"")];
-			   // create Ad for preview
-			   var previewAd = new this.Ad(this, formatCode, options);
-			   previewAd.adType = formatCode;
-			   previewAd.ext = "js";
-			   var previewJsonRequest = "";
-			   if(!previewAd.options.write)previewJsonRequest = "json/";
-			   previewAd.swfSrc = that.config.previewHost + "/creatives/preview/"+previewJsonRequest+"tag.do?id=" + previewformat.creative + "&slotId=" + previewformat.slot;
-			   previewAd.width = previewformat.width;
-			   previewAd.height = previewformat.height;
-			   ad = previewAd;
-			   if (document.readyState === 'complete') {
-				   this.showPreviewSign();
-			   } else {
-				   addEventListener("load", that.showPreviewSign.bind(that));
-			   }
-		   }
-	   }
-	}
+// 	if (this.previewActive) {
+// 		var pf = this.previewFormats
+// 	   for (var key in pf) {
+// 		   if (key  == formatCode + (options.position?options.position:"")) {
+// 			   var previewformat = pf[formatCode + (options.position?options.position:"")];
+// 			   // create Ad for preview
+// 			   var previewAd = new this.Ad(this, formatCode, options);
+// 			   previewAd.adType = formatCode;
+// 			   previewAd.ext = "js";
+// 			   previewAd.previewUrl = that.config.previewHost + "/creatives/preview/json/tag.do?id=" + previewformat.creative + "&slotId=" + previewformat.slot;
+// 			   previewAd.width = previewformat.width;
+// 			   previewAd.height = previewformat.height;
+// 			   ad = previewAd;
+// 			   if (document.readyState === 'complete') {
+// 				   this.showPreviewSign();
+// 			   } else {
+// 				   addEventListener("load", that.showPreviewSign.bind(that));
+// 			   }
+// 		   }
+// 	   }
+// 	}
 	 
- 	this.ads.push([formatCode, ad]);
- 	if (ad.options.write) {
-        if(this.config.previewExclusive == false || (this.config.previewExclusive == true && ad.swfSrc)){
-            this.write(ad);
-        }     
- 	}
- 	return ad;
- };
+//  	this.ads[slotName] = ad;
+	
+// 	// Do we need to keep this? Preferably do this step only when position is coming into view => lazy loading/rendering
+//  	// if (ad.options.write) {
+//     //     if(this.config.previewExclusive == false || (this.config.previewExclusive == true && ad.swfSrc)){
+//     //         this.write(ad);
+//     //     }     
+//  	// }
+//  	return ad;
+//  };
 
 /**
  * Executes a document.write and creates a script tag when called.
@@ -231,42 +249,42 @@ Adhese.prototype.addRequestString = function(value) {
  * @param  {object} ad The Ad object instance to be written to the document.
  * @return {void}
  */
- Adhese.prototype.write = function(ad) {
- 	if (this.config.safeframe || ad.safeframe) {
- 		var adUrl = "";
- 		if (this.previewActive && ad.swfSrc) {
- 			adUrl = ad.swfSrc;
- 		} else {
- 			adUrl = this.getRequestUri(ad, {'type':'json'});
- 		}
+//  Adhese.prototype.write = function(ad) {
+//  	if (this.config.safeframe || ad.safeframe) {
+//  		var adUrl = "";
+//  		if (this.previewActive && ad.swfSrc) {
+//  			adUrl = ad.swfSrc;
+//  		} else {
+//  			adUrl = this.getRequestUri(ad, {'type':'json'});
+//  		}
 
-		this.helper.log('Adhese.write: request uri: ' + adUrl + ', safeframe enabled');
+// 		this.helper.log('Adhese.write: request uri: ' + adUrl + ', safeframe enabled');
 
-		var safeframeContainerID = this.safeframe.containerID;
- 		AdheseAjax.request({
-    		url: adUrl,
-    		method: 'get',
-    		json: true
-		}).done(function(result) {
-			adhese.safeframe.addPositions(result);
-			for (var i = result.length - 1; i >= 0; i--) {
-				adhese.safeframe.render(result[i][safeframeContainerID]);
-    		};
-		});
+// 		var safeframeContainerID = this.safeframe.containerID;
+//  		AdheseAjax.request({
+//     		url: adUrl,
+//     		method: 'get',
+//     		json: true
+// 		}).done(function(result) {
+// 			adhese.safeframe.addPositions(result);
+// 			for (var i = result.length - 1; i >= 0; i--) {
+// 				adhese.safeframe.render(result[i][safeframeContainerID]);
+//     		};
+// 		});
 
- 	} else {
+//  	} else {
 
- 		var adUrl = "";
- 		if (this.previewActive && ad.swfSrc) {
- 			adUrl = ad.swfSrc;
- 		} else {
- 			adUrl = this.getRequestUri(ad, {'type':'js'});
- 		}
+//  		var adUrl = "";
+//  		if (this.previewActive && ad.swfSrc) {
+//  			adUrl = ad.swfSrc;
+//  		} else {
+//  			adUrl = this.getRequestUri(ad, {'type':'js'});
+//  		}
 
- 		this.helper.log('Adhese.write: request uri: ' + adUrl);
- 		document.write('<scri'+'pt type="text/javascript" src="' + adUrl + '"></scr'+'ipt>');
- 	}
- };
+//  		this.helper.log('Adhese.write: request uri: ' + adUrl);
+//  		document.write('<scri'+'pt type="text/javascript" src="' + adUrl + '"></scr'+'ipt>');
+//  	}
+//  };
 
 /**
  * Creates an invisible pixel in the document that sends a request to Adhese for tracking an impression or action.
@@ -290,130 +308,6 @@ Adhese.prototype.renderAndTrackAd = function(ad) {
         url: ad.tracker,
         method: "get"
     });
-};
-
-/**
- * This function can be used to create a request for several slots at once. For each ad object passed, a sl part is added to the request. The target parameters are added once.
- * @param  {Ad[]} adArray An array of Ad objects that need to be included in the URI
- * @param  {object} options Possible options: type:'js'|'json'|'jsonp', when using type:'jsonp' you can also provide the name of a callback function callback:'callbackFunctionName'. Type 'js' is the default if no options are given. Callback 'callback' is the default for type 'jsonp'
- * @return {string}         The URI to be used to retrieve an array of ads.
- */
-Adhese.prototype.getMultipleRequestUri = function(adArray, options) {
-	var uri = this.config.host;
- 	if (!options) options = {'type':'js'};
-
- 	// add prefix depending on request type
- 	switch(options.type) {
-	 	case 'json':
-	 	uri += 'json/';
-	 	break;
-
-	 	case 'jsonp':
-	 	if (!options.callbackFunctionName) options.callbackFunctionName = 'callback';
-	 	uri += 'jsonp/' + options.callbackFunctionName + '/';
-	 	break;
-
-	 	default:
-	 	uri += 'ad/';
-	 	break;
-	}
-
-	 // add an sl clause for each Ad in adArray
-	for (var i = adArray.length - 1; i >= 0; i--) {
-		var ad = adArray[i];
-		if (!ad.swfSrc || (ad.swfSrc && ad.swfSrc.indexOf('preview') == -1)){
-			uri += "sl" + this.getSlotName(ad) + "/";
-		}
-    }
-
-	for (var a in this.request) {
-		var s = a;
-		for (var x=0; x<this.request[a].length; x++) {
-			s += this.request[a][x] + (this.request[a].length-1>x?';':'');
-		}
-		uri += s + '/';
-	}
-
-	for (var i = 0, a = this.requestExtra; i < a.length; i++) {
-        if (a[i]) {
-            uri += a[i] + "/";
-        }
-    }
-	uri += '?t=' + new Date().getTime();
-	return uri;
-};
-
-/**
- * Function that translates array opf ads and target parameters into a payload object for use in a POST request to the ad endpoint
- * @param  {Ad[]} adArray An array of Ad objects that need to be included in the URI
- * @param {object} options	options object
- * @param {object} options.vastContentAsUrl	set to false if you want to receive VAST markup inline, if set to true, response contains a url to retrieve the VAST markup (default true)
- * @return {object}         Object in the Adhese payload structure
- */
-Adhese.prototype.getRequestPayload = function(adArray, options) {
-	
-	let slots = [];
-	for (var i = adArray.length - 1; i >= 0; i--) {
-		var ad = adArray[i];
-		if (!ad.swfSrc || (ad.swfSrc && ad.swfSrc.indexOf('preview') == -1)){
-			slots.push({
-				"slotname": this.getSlotName(ad),
-				"parameters": ad.parameters
-			});
-		}
-	}
-
-	let commonParams = {};
-	for (var a in this.request) {
-		var values = [];
-		for (var x=0; x<this.request[a].length; x++) {
-			values.push(this.request[a][x]);
-		}
-		commonParams[a] = values;
-	}
-	
-	let payload = {
-		"slots": slots,
-		"parameters": commonParams,
-		"vastContentAsUrl": (options && options.vastContentAsUrl ? options.vastContentAsUrl : true)
-	 };
-	 return payload;
-};
-
-/**
- * Returns the slot name for this ad
- *
- * @param {Ad} ad the Ad instance whose uri is needed
- * @return {string}
- */
-Adhese.prototype.getSlotName = function(ad) {
-	if(ad.options.position && ad.options.location) {
-		u = ad.options.location + ad.options.position;
-	} else if(ad.options.position) {
-		u = this.config.location + ad.options.position;
-	} else if (ad.options.location) {
-		u = ad.options.location;
-	} else {
-		u = this.config.location;
-	}
-	return u  + "-" + ad.format;	
-}
-
-/**
- * Returns the uri to execute the actual request for this ad
- *
- * @param {Ad} ad the Ad instance whose uri is needed
- * @param {object} options Possible options: type:'js'|'json'|'jsonp', when using type:'jsonp' you can also provide the name of a callback function callback:'callbackFunctionName'. Type 'js' is the default if no options are given. Callback 'callback' is the default for type 'jsonp'
- * @return {string}
- */
-Adhese.prototype.getRequestUri = function(ad, options) {
-    if(options.preview  && options.preview == true){
-       return ad.swfSrc;
-    }else{
-        var adArray = [ ad ];
-        return this.getMultipleRequestUri(adArray, options);
-    }
-
 };
 
 /**
@@ -505,78 +399,3 @@ Adhese.prototype.registerResponse = function(key, ad) {
 Adhese.prototype.logSafeframeMessages = function(id,status,data) {
 	this.helper.log(id,status,data);
 }
-
-/**
-* This function is used for viewability measurement and makes use of the IntersectionObserver API. Default settings are based on IAB.
-* @param  {object} target   Object to which we will add the observer. Can be the safeframe object or another one.
-* @param  {object} settings Viewability settings such as duration and in view percentage. When set to true, default IAB settings will be used.
-*/
-Adhese.prototype.enableViewabilityTracking = function (target, settings) {
-
-	target.viewability = {
-		contentBox: document.querySelector("body"),
-		trackers: {},
-		trackerTimeout: 0
-	}
-
-	observerOptions = {
-		root: null,
-		rootMargin: "0px",
-		threshold: []
-	};
-
-	if (typeof settings === 'object' && settings !== null) {
-		settings.inViewPercentage ? observerOptions.threshold.push(settings.inViewPercentage) : observerOptions.threshold.push(0.5);
-		if (settings.rootMargin) {
-			observerOptions.rootMargin = settings.rootMargin;
-		}		
-		target.viewability.trackerTimeout = settings.duration && settings.duration !== '' ? settings.duration : 1;
-		target.viewability.inViewPercentage = observerOptions.threshold[observerOptions.threshold.length-1];
-	} else {
-		observerOptions.threshold.push(0.5);
-		target.viewability.trackerTimeout = 1;
-		target.viewability.inViewPercentage = observerOptions.threshold[observerOptions.threshold.length-1];
-	}
-
-	target.viewability.intersectionCallback = function (entries) {
-		entries.forEach(function (entry) {
-			var adBox = entry.target;
-			if (entry.isIntersecting) {
-				if (entry.intersectionRatio >= target.viewability.inViewPercentage && target.viewability.trackerTimeout > 0) {
-					adBox.timerRunning = true;
-					adBox.timer = window.setTimeout(function () {
-						target.viewability.adObserver.unobserve(adBox);
-						if (target.viewability.trackers[adBox.id]) {
-							var tracker = document.createElement("img");
-							tracker.src = target.viewability.trackers[adBox.id];
-							tracker.style.height = "1px";
-							tracker.style.width = "1px";
-							tracker.style.margin = "-1px";
-							tracker.style.border = "0";
-							tracker.style.position = "absolute";
-							tracker.style.top = "0";
-							document.body.appendChild(tracker);
-						}						
-					}, target.viewability.trackerTimeout * 1000);
-				} else if (entry.intersectionRatio >= target.viewability.inViewPercentage) {
-					target.viewability.adObserver.unobserve(adBox);
-					if (target.viewability.trackers[adBox.id]) {
-						var tracker = document.createElement("img");
-						tracker.src = target.viewability.trackers[adBox.id];
-						tracker.style.height = "1px";
-						tracker.style.width = "1px";
-						tracker.style.margin = "-1px";
-						tracker.style.border = "0";
-						tracker.style.position = "absolute";
-						tracker.style.top = "0";
-						document.body.appendChild(tracker);
-					}
-				} 
-			} else if (adBox.timerRunning) {
-					window.clearTimeout(adBox.timer);
-					adBox.timerRunning = false;
-			}
-		});
-	}
-	target.viewability.adObserver = new IntersectionObserver(target.viewability.intersectionCallback, observerOptions);
-};
