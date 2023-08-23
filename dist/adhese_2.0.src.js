@@ -53,6 +53,7 @@ function Adhese() {
     this.request = {};
     this.requestExtra = [];
     this.ads = [];
+    this.previewAds = [];
     this.that = this;
     this.helper = new this.Helper();
     this.detection = new this.Detection();
@@ -146,8 +147,7 @@ Adhese.prototype.init = function(options) {
     this.checkPreview();
     this.checkAdheseInfo();
     this.helper.log("Adhese: initialized with config:", this.config);
-    this.ads = this.FindSlots(this.config);
-    this.requestAds();
+    this.FindSlots(this.config);
 };
 
 Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
@@ -155,7 +155,7 @@ Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
         if (safeframeContainerID) {
             this.safeframe = new this.SafeFrame(this.config.poolHost, safeframeContainerID, this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
         } else {
-            this.safeframe = new this.SafeFrame(this.config.poolHost, this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
+            this.safeframe = new this.SafeFrame(this.config.poolHost, "destination", this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
         }
     }
 };
@@ -914,6 +914,13 @@ Adhese.prototype.renderAd = function(adPosition) {
     this.AdheseInfo(this.ads[adPosition].ToRenderAd, document.getElementById(adPosition));
 };
 
+Adhese.prototype.renderPreviewAds = function() {
+    for (key in this.previewAds) {
+        if (this.config.safeframe === true) this.safeframe.render(this.previewAds[key].containingElementId); else this.friendlyIframeRender(this.previewAds[key].ToRenderAd, this.previewAds[key].containingElementId);
+    }
+    this.showPreviewSign();
+};
+
 Adhese.prototype.AdheseInfo = function(ad, destination) {
     let adhese_info = document.createElement("AdheseInfo");
     adhese_info.dataset.campaingid = ad.orderId;
@@ -955,6 +962,9 @@ Adhese.prototype.requestAds = async function() {
             }
         }
     }
+    if (typeof this.previewActive !== "undefined" && this.previewActive) {
+        this.getPreviewAds();
+    }
     if (!this.config.lazyloading) {
         this.helper.log("Lazy loading Not Active! Rendering all positions");
         this.renderAds();
@@ -964,9 +974,9 @@ Adhese.prototype.requestAds = async function() {
     }
 };
 
-Adhese.prototype.getAds = async function() {
+Adhese.prototype.getAds = async function(previewURL) {
     this.helper.log("Using GET to Fetch Ads from the adserver");
-    const url = this.getMultipleRequestUri(this.ads, {
+    const url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getMultipleRequestUri(this.ads, {
         type: "json"
     });
     this.helper.log("Fetching Ads for all positions with url: ", url);
@@ -998,6 +1008,18 @@ Adhese.prototype.postAds = async function() {
     }
 };
 
+Adhese.prototype.getPreviewAds = async function() {
+    for (let key in this.previewAds) {
+        results = await this.getAds(this.previewAds[key].previewUrl);
+        for (x = 0; x < results.length; x++) {
+            if (this.previewAds[key].format === results[x].adFormat) results[x].destination = this.previewAds[key].containingElementId;
+            this.previewAds[key].ToRenderAd = results[x];
+            if (this.config.safeframe === true) this.safeframe.addPositions([ results[x] ]);
+        }
+    }
+    this.renderPreviewAds();
+};
+
 Adhese.prototype.getMultipleRequestUri = function(adArray, options) {
     var uri = this.config.host;
     if (!options) options = {
@@ -1019,7 +1041,7 @@ Adhese.prototype.getMultipleRequestUri = function(adArray, options) {
     }
     for (var i = adArray.length - 1; i >= 0; i--) {
         var ad = adArray[i];
-        if (!ad.swfSrc || ad.swfSrc && ad.swfSrc.indexOf("preview") == -1) {
+        if (!ad.previewUrl || ad.previewUrl && ad.previewUrl.indexOf("preview") == -1) {
             uri += "sl" + ad.slotName + "/";
         }
     }
@@ -1077,7 +1099,6 @@ Adhese.prototype.getRequestUri = function(ad, options) {
 
 Adhese.prototype.FindSlots = function(options) {
     this.helper.log("----------------------------------- Finding Adslots on the page -------------------------------------------------");
-    var returned_slots = {};
     let slots = document.querySelectorAll(".adunit");
     for (x = 0; x < slots.length; x++) {
         const format = slots[x].dataset.format;
@@ -1085,18 +1106,27 @@ Adhese.prototype.FindSlots = function(options) {
         const slot_id = format + "_" + slot;
         slots[x].id = slot_id;
         options.containerId = slot_id;
-        if (this.previewActive && format in Object.keys(adhese.previewFormats)) {} else {
+        options.containingElementID = this.createSlotDestination(slots[x]);
+        options.loaded = false;
+        options.toRenderAd = new Array();
+        if (this.previewActive && format in adhese.previewFormats) {
+            options.previewActive = true;
+            var previewAd = new this.Ad(this, format, options);
+            previewAd.ext = "js";
+            previewAd.previewUrl = this.config.previewHost + "/creatives/preview/json/tag.do?id=" + this.previewFormats[format].creative + "&slotId=" + this.previewFormats[format].slot;
+            previewAd.width = this.previewFormats[format].width;
+            previewAd.height = this.previewFormats[format].height;
+            this.previewAds[slots[x].dataset.format + "_" + slot] = previewAd;
+            this.helper.log("Preview Required for slot: " + slots[x].dataset.format + "_" + slot + "with settings;", previewAd);
+        } else {
             options.position = typeof slots[x].dataset.slot !== "undefined" ? slots[x].dataset.slot : "";
             options.parameters = typeof slots[x].dataset.parameters !== "undefined" ? JSON.parse(slots[x].dataset.parameters) : {};
             options.slot = slot;
-            options.containingElementID = this.createSlotDestination(slots[x]);
-            options.loaded = false;
-            options.toRenderAd = new Array();
-            returned_slots[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
+            this.ads[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
+            this.helper.log("Slot Found for settings:", this.ads[slots[x].dataset.format + "_" + slot]);
         }
-        this.helper.log("Slot Found for settings:", returned_slots[slots[x].dataset.format + "_" + slot]);
     }
-    return returned_slots;
+    this.requestAds();
 };
 
 Adhese.prototype.CountSlot = function(format) {
