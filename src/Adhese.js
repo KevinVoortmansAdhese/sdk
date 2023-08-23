@@ -7,6 +7,7 @@
  	this.request = {};
  	this.requestExtra = [];
  	this.ads = [];
+	this.previewAds = [];
  	this.that = this;
  	this.helper = new this.Helper();
  	this.detection = new this.Detection();
@@ -84,8 +85,8 @@
  	if (typeof options.safeframe == 'undefined' || options.safeframe == false) {
  		this.config.safeframe = false;
  	} else {
-		  this.config.safeframe = options.safeframe;
-		  this.initSafeFrame(options.safeframeContainerID);
+		this.config.safeframe = options.safeframe;
+		this.initSafeFrame(options.safeframeContainerID);
 	 }
 	 this.config.logSafeframeMessages = options.safeframeMsg || this.logSafeframeMessages;
 
@@ -128,8 +129,8 @@
 	this.checkAdheseInfo();
 
  	this.helper.log('Adhese: initialized with config:', this.config);
-	this.ads = this.FindSlots(this.config);
-	this.requestAds();
+	this.FindSlots(this.config);
+	
  };
 
 Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
@@ -137,7 +138,7 @@ Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
 		if (safeframeContainerID) {
 			this.safeframe = new this.SafeFrame(this.config.poolHost, safeframeContainerID, this.config.viewabilityTracking,this.config.logSafeframeMessages, this.helper);	
 		} else {
-			this.safeframe = new this.SafeFrame(this.config.poolHost, this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
+			this.safeframe = new this.SafeFrame(this.config.poolHost, "destination",this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
 		}		
 	}	
 }
@@ -210,27 +211,27 @@ Adhese.prototype.addRequestString = function(value) {
 
 //   	var ad = new this.Ad(this, formatCode, options);
 	 	
-// 	if (this.previewActive) {
-// 		var pf = this.previewFormats
-// 	   for (var key in pf) {
-// 		   if (key  == formatCode + (options.position?options.position:"")) {
-// 			   var previewformat = pf[formatCode + (options.position?options.position:"")];
-// 			   // create Ad for preview
-// 			   var previewAd = new this.Ad(this, formatCode, options);
-// 			   previewAd.adType = formatCode;
-// 			   previewAd.ext = "js";
-// 			   previewAd.previewUrl = that.config.previewHost + "/creatives/preview/json/tag.do?id=" + previewformat.creative + "&slotId=" + previewformat.slot;
-// 			   previewAd.width = previewformat.width;
-// 			   previewAd.height = previewformat.height;
-// 			   ad = previewAd;
-// 			   if (document.readyState === 'complete') {
-// 				   this.showPreviewSign();
-// 			   } else {
-// 				   addEventListener("load", that.showPreviewSign.bind(that));
-// 			   }
-// 		   }
-// 	   }
-// 	}
+	// if (this.previewActive) {
+	// 	var pf = this.previewFormats
+	//    for (var key in pf) {
+	// 	   if (key  == formatCode + (options.position?options.position:"")) {
+	// 		   var previewformat = pf[formatCode + (options.position?options.position:"")];
+	// 		   // create Ad for preview
+	// 		   var previewAd = new this.Ad(this, formatCode, options);
+	// 		   previewAd.adType = formatCode;
+	// 		   previewAd.ext = "js";
+	// 		   previewAd.previewUrl = that.config.previewHost + "/creatives/preview/json/tag.do?id=" + previewformat.creative + "&slotId=" + previewformat.slot;
+	// 		   previewAd.width = previewformat.width;
+	// 		   previewAd.height = previewformat.height;
+	// 		   ad = previewAd;
+	// 		   if (document.readyState === 'complete') {
+	// 			   this.showPreviewSign();
+	// 		   } else {
+	// 			   addEventListener("load", that.showPreviewSign.bind(that));
+	// 		   }
+	// 	   }
+	//    }
+	// }
 	 
 //  	this.ads[slotName] = ad;
 	

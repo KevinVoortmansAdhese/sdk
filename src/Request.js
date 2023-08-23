@@ -13,6 +13,9 @@ Adhese.prototype.requestAds = async function(){
             }
         }
     }
+	if(typeof this.previewActive !== "undefined" && this.previewActive){
+		this.getPreviewAds();
+	}
     if(!this.config.lazyloading){
         this.helper.log("Lazy loading Not Active! Rendering all positions");
         this.renderAds();
@@ -22,9 +25,9 @@ Adhese.prototype.requestAds = async function(){
     }
 }
 
-Adhese.prototype.getAds = async function(){	
+Adhese.prototype.getAds = async function(previewURL){	
 	this.helper.log("Using GET to Fetch Ads from the adserver");
-	const url = this.getMultipleRequestUri(this.ads, {'type':'json'});
+	const url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getMultipleRequestUri(this.ads, {'type':'json'});
 	this.helper.log("Fetching Ads for all positions with url: ", url);
 	try {
 		const call = await fetch(url);
@@ -56,6 +59,21 @@ Adhese.prototype.postAds = async function(){
     }
 }
 
+
+Adhese.prototype.getPreviewAds = async function(){
+    for (let key in this.previewAds){
+		results = await this.getAds(this.previewAds[key].previewUrl);
+		for (x=0;x<results.length; x++){
+			if (this.previewAds[key].format === results[x].adFormat)
+				results[x].destination = this.previewAds[key].containingElementId;
+				this.previewAds[key].ToRenderAd = results[x];
+				if (this.config.safeframe === true)
+                    this.safeframe.addPositions([results[x]]);
+		}
+	}
+	this.renderPreviewAds();
+}
+
 /**
  * This function can be used to create a request for several slots at once. For each ad object passed, a sl part is added to the request. The target parameters are added once.
  * @param  {Ad[]} adArray An array of Ad objects that need to be included in the URI
@@ -85,7 +103,7 @@ Adhese.prototype.getMultipleRequestUri = function(adArray, options) {
 	 // add an sl clause for each Ad in adArray
 	for (var i = adArray.length - 1; i >= 0; i--) {
 		var ad = adArray[i];
-		if (!ad.swfSrc || (ad.swfSrc && ad.swfSrc.indexOf('preview') == -1)){
+		if (!ad.previewUrl || (ad.previewUrl && ad.previewUrl.indexOf('preview') == -1)){
 			uri += "sl" + ad.slotName + "/";
 		}
     }

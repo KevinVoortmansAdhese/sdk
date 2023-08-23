@@ -1,6 +1,5 @@
 Adhese.prototype.FindSlots = function(options) {
     this.helper.log("----------------------------------- Finding Adslots on the page -------------------------------------------------");
-    var returned_slots = {};
     let slots = document.querySelectorAll(".adunit");
     for(x=0; x< slots.length; x++){
         const format = slots[x].dataset.format;
@@ -9,22 +8,31 @@ Adhese.prototype.FindSlots = function(options) {
 
         slots[x].id = slot_id;
         options.containerId = slot_id;
+        options.containingElementID = this.createSlotDestination(slots[x]);
+        options.loaded = false;
+        options.toRenderAd = new Array;
 
-        if(this.previewActive && format in Object.keys(adhese.previewFormats)){
-            // MAKE PREVIEW SETTINGS
+        if(this.previewActive && format in adhese.previewFormats){
+            options.previewActive = true;
+            var previewAd = new this.Ad(this, format, options);
+            //previewAd.adType = format;
+            previewAd.ext = "js";
+            previewAd.previewUrl = this.config.previewHost + "/creatives/preview/json/tag.do?id=" + this.previewFormats[format].creative + "&slotId=" + this.previewFormats[format].slot;
+            previewAd.width = this.previewFormats[format].width;
+            previewAd.height = this.previewFormats[format].height;
+            this.previewAds[slots[x].dataset.format + "_" + slot] = previewAd;
+            this.helper.log("Preview Required for slot: "+ slots[x].dataset.format + "_" + slot + "with settings;", previewAd)
         }else{
             //COMPLETE NORMAL SETTINGS
             options.position = typeof slots[x].dataset.slot !== "undefined" ? slots[x].dataset.slot : "";
             options.parameters = typeof slots[x].dataset.parameters !== "undefined" ? JSON.parse(slots[x].dataset.parameters) : {};
             options.slot = slot;
-            options.containingElementID = this.createSlotDestination(slots[x]);
-            options.loaded = false;
-            options.toRenderAd = new Array;
-            returned_slots[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
+            this.ads[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
+            this.helper.log("Slot Found for settings:", this.ads[slots[x].dataset.format + "_" + slot])
         }
-        this.helper.log("Slot Found for settings:", returned_slots[slots[x].dataset.format + "_" + slot])
+        
     }
-    return returned_slots
+    this.requestAds();
 }
 
 

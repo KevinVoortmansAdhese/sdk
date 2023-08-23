@@ -55,6 +55,17 @@ Adhese.prototype.renderAd = function(adPosition){
     this.AdheseInfo(this.ads[adPosition].ToRenderAd, document.getElementById(adPosition));
 }
 
+Adhese.prototype.renderPreviewAds = function(){
+    for(key in this.previewAds){
+        if (this.config.safeframe === true)
+            this.safeframe.render(this.previewAds[key].containingElementId);
+        else
+            this.friendlyIframeRender(this.previewAds[key].ToRenderAd , this.previewAds[key].containingElementId)
+    }
+    this.showPreviewSign();
+}
+
+
 Adhese.prototype.AdheseInfo = function(ad, destination){
     let adhese_info = document.createElement("AdheseInfo");
     adhese_info.dataset.campaingid = ad.orderId;
