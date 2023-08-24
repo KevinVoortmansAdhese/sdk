@@ -6,9 +6,9 @@ Adhese.prototype.FindSlots = function(options) {
         const slot = slots[x].dataset.slot !== undefined ? slots[x].dataset.slot : this.CountSlot(slots[x].dataset.format);
         const slot_id = format + "_" + slot
 
-        slots[x].id = slot_id;
-        options.containerId = slot_id;
-        options.containingElementID = this.createSlotDestination(slots[x]);
+        //slots[x].id = slot_id;
+        //options.containerId = slot_id;
+        options.containingElementID = this.createSlotDestination(slots[x], slot_id);
         options.loaded = false;
         options.toRenderAd = new Array;
 
@@ -41,9 +41,9 @@ Adhese.prototype.CountSlot = function(format){
     return this.formatCount[format];
 }
 
-Adhese.prototype.createSlotDestination = function(destination){
+Adhese.prototype.createSlotDestination = function(destination, slot_id){
     var child = document.createElement("div");
-    child.id = destination.id + "_child";
+    child.id = slot_id;
     destination.appendChild(child);
     return child.id
 }

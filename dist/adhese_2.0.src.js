@@ -9,11 +9,6 @@ Adhese.prototype.Ad = function(adhese, formatCode, options) {
     if (this.options.position != undefined) {
         this.uid = this.options.position + this.format;
     }
-    if (this.options.containerId != undefined) {
-        this.containerId = this.options.containerId;
-    } else {
-        this.containerId = "";
-    }
     this.slotName = this.getSlotName(this);
     this.containingElementId = options.containingElementID;
     if (options && options.parameters) this.parameters = options.parameters; else this.parameters = {};
@@ -895,7 +890,7 @@ Adhese.prototype.lazyRenderAds = function(changes, observer) {
 
 Adhese.prototype.renderAds = function() {
     this.helper.log("----------------------------------- Rendering Ads Without lazy loading -------------------------------------------------");
-    for (var adPosition in this.ads) {
+    for (let adPosition in this.ads) {
         this.renderAd(adPosition);
         this.helper.log("Rendered Position: " + adPosition);
     }
@@ -915,7 +910,7 @@ Adhese.prototype.renderAd = function(adPosition) {
 };
 
 Adhese.prototype.renderPreviewAds = function() {
-    for (key in this.previewAds) {
+    for (let key in this.previewAds) {
         if (this.config.safeframe === true) this.safeframe.render(this.previewAds[key].containingElementId); else this.friendlyIframeRender(this.previewAds[key].ToRenderAd, this.previewAds[key].containingElementId);
     }
     this.showPreviewSign();
@@ -1104,9 +1099,7 @@ Adhese.prototype.FindSlots = function(options) {
         const format = slots[x].dataset.format;
         const slot = slots[x].dataset.slot !== undefined ? slots[x].dataset.slot : this.CountSlot(slots[x].dataset.format);
         const slot_id = format + "_" + slot;
-        slots[x].id = slot_id;
-        options.containerId = slot_id;
-        options.containingElementID = this.createSlotDestination(slots[x]);
+        options.containingElementID = this.createSlotDestination(slots[x], slot_id);
         options.loaded = false;
         options.toRenderAd = new Array();
         if (this.previewActive && format in adhese.previewFormats) {
@@ -1134,9 +1127,9 @@ Adhese.prototype.CountSlot = function(format) {
     return this.formatCount[format];
 };
 
-Adhese.prototype.createSlotDestination = function(destination) {
+Adhese.prototype.createSlotDestination = function(destination, slot_id) {
     var child = document.createElement("div");
-    child.id = destination.id + "_child";
+    child.id = slot_id;
     destination.appendChild(child);
     return child.id;
 };

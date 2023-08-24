@@ -21,11 +21,6 @@
  	if (this.options.position!=undefined) {
 		this.uid = this.options.position + this.format;
 	}
-	if (this.options.containerId!=undefined) {
-		this.containerId = this.options.containerId;
-	} else {
-		this.containerId = "";
-	}
 	this.slotName = this.getSlotName(this);
 	this.containingElementId = options.containingElementID;
 	if (options && options.parameters) this.parameters = options.parameters;
