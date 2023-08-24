@@ -31,7 +31,7 @@ Adhese.prototype.lazyRenderAds = function(changes, observer){
 
 Adhese.prototype.renderAds = function(){
     this.helper.log("----------------------------------- Rendering Ads Without lazy loading -------------------------------------------------");
-    for(var adPosition in this.ads){
+    for(let adPosition in this.ads){
         this.renderAd(adPosition);
         this.helper.log("Rendered Position: " + adPosition)
     }
@@ -56,7 +56,7 @@ Adhese.prototype.renderAd = function(adPosition){
 }
 
 Adhese.prototype.renderPreviewAds = function(){
-    for(key in this.previewAds){
+    for(let key in this.previewAds){
         if (this.config.safeframe === true)
             this.safeframe.render(this.previewAds[key].containingElementId);
         else
