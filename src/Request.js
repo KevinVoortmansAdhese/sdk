@@ -1,6 +1,7 @@
 Adhese.prototype.requestAds = async function(){
     this.helper.log("----------------------------------- Requesting Ads from the adserver -------------------------------------------------");
-    let results = this.config.requestType === "GET" ? await this.getAds() : await this.postAds();
+	let filtered_ads = this.filterAds(this.ads);
+    let results = this.config.requestType === "GET" ? await this.getAds(filtered_ads.loadNow) : await this.postAds(filtered_ads.loadNow);
     this.helper.log("The following Ads are returned from the request", results);
     for (x=0;x<results.length; x++){
         for (var key in this.ads){
@@ -16,18 +17,22 @@ Adhese.prototype.requestAds = async function(){
 	if(typeof this.previewActive !== "undefined" && this.previewActive){
 		this.getPreviewAds();
 	}
+	if (filtered_ads.loadLater.length !== 0){
+		this.helper.log("Found Postions with Lazy Requesting Enabled. Only requesting ads when the position becomes visible")
+		this.observeRequests(filtered_ads.loadLater);
+	}
     if(!this.config.lazyloading){
-        this.helper.log("Lazy loading Not Active! Rendering all positions");
+        this.helper.log("Lazy Rendering Not Active! Rendering all positions");
         this.renderAds();
     }else{
-        this.helper.log("Lazy loading Active! Loading all Ads and Rendering when in view with the following options:", this.config.lazyloading);
+        this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyloading);
         this.observeAds();
     }
 }
 
-Adhese.prototype.getAds = async function(previewURL){	
+Adhese.prototype.getAds = async function(ads, previewURL){	
 	this.helper.log("Using GET to Fetch Ads from the adserver");
-	const url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getMultipleRequestUri(this.ads, {'type':'json'});
+	const url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getMultipleRequestUri(ads, {'type':'json'});
 	this.helper.log("Fetching Ads for all positions with url: ", url);
 	try {
 		const call = await fetch(url);
@@ -39,10 +44,10 @@ Adhese.prototype.getAds = async function(previewURL){
 	}
 }
 
-Adhese.prototype.postAds = async function(){
+Adhese.prototype.postAds = async function(ads){
     this.helper.log("Using POST to Fetch Ads from the adserver");
     try {
-        const requestbody = this.getRequestPayload(this.ads, this.config);
+        const requestbody = this.getRequestPayload(ads, this.config);
         this.helper.log("Post settings used are:", requestbody)
 		const call = await fetch(this.config.host+"json", {
             method: 'POST',
@@ -59,6 +64,21 @@ Adhese.prototype.postAds = async function(){
     }
 }
 
+Adhese.prototype.filterAds = function(ads){
+	let returned_loadLater= [];
+	let returned_loadNow = [];
+	for (let key in ads){
+		if (!ads[key].options.lazyRequest){
+			returned_loadNow.push(ads[key]);
+		}else{
+			returned_loadLater.push(ads[key]);
+		}
+	}
+	return {
+		"loadNow": returned_loadNow,
+		"loadLater": returned_loadLater
+	}
+}
 
 Adhese.prototype.getPreviewAds = async function(){
     for (let key in this.previewAds){
@@ -74,6 +94,20 @@ Adhese.prototype.getPreviewAds = async function(){
 	this.renderPreviewAds();
 }
 
+Adhese.prototype.lazyRequestAds = function(changes, observer){
+    changes.forEach(async element => {
+        if(!element.target.dataset.loaded && element.intersectionRatio === 1){
+            this.helper.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",element.target.id + " Became visible! Requesting and rendering Ad in position.");
+            let results = this.config.requestType === "GET" ? await this.getAds([this.ads[element.target.id]]) : await this.postAds([this.ads[element.target.id]]);
+			results[0].destination = this.ads[element.target.id].containingElementId;
+			this.helper.log("The following ad is returned", results[0])
+            this.ads[element.target.id].ToRenderAd = results[0];
+			if (this.config.safeframe === true)
+				this.safeframe.addPositions([this.ads[element.target.id].ToRenderAd]);
+			this.renderAd(element.target.id)
+		}
+    });
+}
 /**
  * This function can be used to create a request for several slots at once. For each ad object passed, a sl part is added to the request. The target parameters are added once.
  * @param  {Ad[]} adArray An array of Ad objects that need to be included in the URI

@@ -53,6 +53,7 @@ function Adhese() {
     this.helper = new this.Helper();
     this.detection = new this.Detection();
     this.formatCount = {};
+    this.observers = {};
     return this;
 }
 
@@ -669,6 +670,21 @@ Adhese.prototype.Helper.prototype.adhElementInViewportWithPercentage = function(
     }
 };
 
+Adhese.prototype.addObserver = function(type, callback) {
+    this.helper.log("************************************ ADDING " + type.toUpperCase() + " OBSERVER *******************************************************");
+    let options = {
+        root: null,
+        rootMargin: "200px",
+        threshold: 1
+    };
+    if (typeof this.config.lazyloading === "object" && this.config.lazyloading.settings !== null) {
+        options.root = this.config.lazyloading.settings.parent !== undefined ? this.config.lazyloading.settings.parent : options.root, 
+        options.rootMargin = this.config.lazyloading.settings.rootMargin !== undefined ? this.config.lazyloading.settings.rootMargin : options.rootMargin, 
+        options.threshold = this.config.lazyloading.settings.threshold !== undefined ? this.config.lazyloading.settings.threshold : options.threshold;
+    }
+    this.observers[type] = new IntersectionObserver(callback.bind(this), options);
+};
+
 Adhese.prototype.checkPreview = function() {
     this.previewFormats = {};
     if (!this.config.previewHost) {
@@ -845,30 +861,21 @@ Adhese.prototype.closeInfoSign = function() {
 };
 
 Adhese.prototype.observeAds = function() {
-    this.helper.log("************************************ Setting up lazy loading *******************************************************");
-    let options = {
-        root: null,
-        rootMargin: "200px",
-        threshold: 1
-    };
-    if (typeof this.config.lazyloading === "object" && this.config.lazyloading.settings !== null) {
-        options.root = this.config.lazyloading.settings.parent !== undefined ? this.config.lazyloading.settings.parent : options.root, 
-        options.rootMargin = this.config.lazyloading.settings.rootMargin !== undefined ? this.config.lazyloading.settings.rootMargin : options.rootMargin, 
-        options.threshold = this.config.lazyloading.settings.threshold !== undefined ? this.config.lazyloading.settings.threshold : options.threshold;
-    }
-    let adObserver = new IntersectionObserver(this.lazyRenderAds.bind(this), options);
+    this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
+    this.addObserver("ad", this.lazyRenderAds);
     for (div_name in this.ads) {
-        this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
-        var destination = document.getElementById(div_name);
-        adObserver.observe(destination);
+        if (!this.ads[div_name].options.lazyRequest) {
+            this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
+            var destination = document.getElementById(div_name);
+            this.observers.ad.observe(destination);
+        }
     }
-    this.helper.log("-----------------------------------Waiting for adposition to come into view ... -------------------------------------------------");
 };
 
 Adhese.prototype.lazyRenderAds = function(changes, observer) {
     changes.forEach(element => {
         if (!element.target.dataset.loaded && element.intersectionRatio === 1) {
-            this.helper.log(element.target.id + " Became visible! Rendering Ad in position.");
+            this.helper.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", element.target.id + " Became visible! Rendering Ad in position.");
             this.renderAd(element.target.id);
         }
     });
@@ -931,7 +938,8 @@ Adhese.prototype.friendlyIframeRender = function(ad, destination_ID) {
 
 Adhese.prototype.requestAds = async function() {
     this.helper.log("----------------------------------- Requesting Ads from the adserver -------------------------------------------------");
-    let results = this.config.requestType === "GET" ? await this.getAds() : await this.postAds();
+    let filtered_ads = this.filterAds(this.ads);
+    let results = this.config.requestType === "GET" ? await this.getAds(filtered_ads.loadNow) : await this.postAds(filtered_ads.loadNow);
     this.helper.log("The following Ads are returned from the request", results);
     for (x = 0; x < results.length; x++) {
         for (var key in this.ads) {
@@ -946,18 +954,22 @@ Adhese.prototype.requestAds = async function() {
     if (typeof this.previewActive !== "undefined" && this.previewActive) {
         this.getPreviewAds();
     }
+    if (filtered_ads.loadLater.length !== 0) {
+        this.helper.log("Found Postions with Lazy Requesting Enabled. Only requesting ads when the position becomes visible");
+        this.observeRequests(filtered_ads.loadLater);
+    }
     if (!this.config.lazyloading) {
-        this.helper.log("Lazy loading Not Active! Rendering all positions");
+        this.helper.log("Lazy Rendering Not Active! Rendering all positions");
         this.renderAds();
     } else {
-        this.helper.log("Lazy loading Active! Loading all Ads and Rendering when in view with the following options:", this.config.lazyloading);
+        this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyloading);
         this.observeAds();
     }
 };
 
-Adhese.prototype.getAds = async function(previewURL) {
+Adhese.prototype.getAds = async function(ads, previewURL) {
     this.helper.log("Using GET to Fetch Ads from the adserver");
-    const url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getMultipleRequestUri(this.ads, {
+    const url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getMultipleRequestUri(ads, {
         type: "json"
     });
     this.helper.log("Fetching Ads for all positions with url: ", url);
@@ -970,10 +982,10 @@ Adhese.prototype.getAds = async function(previewURL) {
     }
 };
 
-Adhese.prototype.postAds = async function() {
+Adhese.prototype.postAds = async function(ads) {
     this.helper.log("Using POST to Fetch Ads from the adserver");
     try {
-        const requestbody = this.getRequestPayload(this.ads, this.config);
+        const requestbody = this.getRequestPayload(ads, this.config);
         this.helper.log("Post settings used are:", requestbody);
         const call = await fetch(this.config.host + "json", {
             method: "POST",
@@ -989,6 +1001,22 @@ Adhese.prototype.postAds = async function() {
     }
 };
 
+Adhese.prototype.filterAds = function(ads) {
+    let returned_loadLater = [];
+    let returned_loadNow = [];
+    for (let key in ads) {
+        if (!ads[key].options.lazyRequest) {
+            returned_loadNow.push(ads[key]);
+        } else {
+            returned_loadLater.push(ads[key]);
+        }
+    }
+    return {
+        loadNow: returned_loadNow,
+        loadLater: returned_loadLater
+    };
+};
+
 Adhese.prototype.getPreviewAds = async function() {
     for (let key in this.previewAds) {
         results = await this.getAds(this.previewAds[key].previewUrl);
@@ -999,6 +1027,32 @@ Adhese.prototype.getPreviewAds = async function() {
         }
     }
     this.renderPreviewAds();
+};
+
+Adhese.prototype.observeRequests = function(ads) {
+    this.helper.log("************************************ Setting up lazy Requesting *******************************************************");
+    this.addObserver("request", this.lazyRequestAds);
+    for (div_name in this.ads) {
+        if (this.ads[div_name].options.lazyRequest) {
+            this.helper.log("enabled an obverser for: " + div_name + " Requesting ad when div becomes visible.");
+            var destination = document.getElementById(div_name);
+            this.observers.request.observe(destination);
+        }
+    }
+};
+
+Adhese.prototype.lazyRequestAds = function(changes, observer) {
+    changes.forEach(async element => {
+        if (!element.target.dataset.loaded && element.intersectionRatio === 1) {
+            this.helper.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", element.target.id + " Became visible! Requesting and rendering Ad in position.");
+            let results = this.config.requestType === "GET" ? await this.getAds([ this.ads[element.target.id] ]) : await this.postAds([ this.ads[element.target.id] ]);
+            results[0].destination = this.ads[element.target.id].containingElementId;
+            this.helper.log("The following ad is returned", results[0]);
+            this.ads[element.target.id].ToRenderAd = results[0];
+            if (this.config.safeframe === true) this.safeframe.addPositions([ this.ads[element.target.id].ToRenderAd ]);
+            this.renderAd(element.target.id);
+        }
+    });
 };
 
 Adhese.prototype.getMultipleRequestUri = function(adArray, options) {
@@ -1101,6 +1155,8 @@ Adhese.prototype.FindSlots = function(options) {
             options.position = typeof slots[x].dataset.slot !== "undefined" ? slots[x].dataset.slot : "";
             options.parameters = typeof slots[x].dataset.parameters !== "undefined" ? JSON.parse(slots[x].dataset.parameters) : {};
             options.slot = slot;
+            options.lazyRequest = typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true" ? true : false;
+            options.disableLazyRendering = typeof slots[x].dataset.lazyrender !== "undefined" && slots[x].dataset.lazyrender === "false" ? true : false;
             this.ads[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
             this.helper.log("Slot Found for settings:", this.ads[slots[x].dataset.format + "_" + slot]);
         }

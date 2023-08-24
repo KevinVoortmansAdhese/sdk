@@ -12,6 +12,7 @@
  	this.helper = new this.Helper();
  	this.detection = new this.Detection();
 	this.formatCount = {};
+	this.observers = {};
  	return this;
  }
 

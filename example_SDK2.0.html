@@ -30,7 +30,8 @@
 	<div style="background-color: red; height: 2000px;"></div>
 	<div class="adunit" data-format="300x250" data-slot="bottom1"></div>
 	<div style="background-color: blue; height: 2000px;"></div>
-	<div class="adunit" data-format="300x250"></div>
+	<div class="adunit" data-format="300x250" data-lazyRequest="true"></div> 
+	<!-- data-disablelazyRender="false" -->
 
 
 	<!-- ASYNCHROON-->
@@ -91,7 +92,7 @@
 					threshold : 1 // Either a single number or an array of numbers which indicate at what percentage of the target's visibility the observer's callback should be executed. Default = 1.0
 				}
 			},
-			requestType: "POST", // GET / POST - 
+			requestType: "GET", // GET / POST - 
 			parameters: { // object with all the keyvalue parameters that need to be added to the request.
 				ag: 40,
 				tm: "hello",

@@ -27,6 +27,10 @@ Adhese.prototype.FindSlots = function(options) {
             options.position = typeof slots[x].dataset.slot !== "undefined" ? slots[x].dataset.slot : "";
             options.parameters = typeof slots[x].dataset.parameters !== "undefined" ? JSON.parse(slots[x].dataset.parameters) : {};
             options.slot = slot;
+
+            options.lazyRequest = typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true" ? true : false;
+            options.disableLazyRendering = typeof slots[x].dataset.lazyrender !== "undefined" && slots[x].dataset.lazyrender === "false" ? true : false;
+
             this.ads[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
             this.helper.log("Slot Found for settings:", this.ads[slots[x].dataset.format + "_" + slot])
         }

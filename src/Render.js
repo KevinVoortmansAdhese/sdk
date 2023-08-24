@@ -1,29 +1,7 @@
-Adhese.prototype.observeAds = function(){
-    this.helper.log("************************************ Setting up lazy loading *******************************************************");
-    let options = {
-        root: null, // relative to document viewport 
-        rootMargin: '200px', // margin around root. Values are similar to css property. Unitless values not allowed 
-        threshold: 1.0 // visible amount of item shown in relation to root 
-    }
-    if (typeof this.config.lazyloading === 'object' && this.config.lazyloading.settings !== null) {
-            options.root = this.config.lazyloading.settings.parent !== undefined ? this.config.lazyloading.settings.parent : options.root, // relative to document viewport 
-            options.rootMargin = this.config.lazyloading.settings.rootMargin !== undefined ? this.config.lazyloading.settings.rootMargin : options.rootMargin, // margin around root. Values are similar to css property. Unitless values not allowed 
-            options.threshold = this.config.lazyloading.settings.threshold !== undefined ? this.config.lazyloading.settings.threshold : options.threshold // visible amount of item shown in relation to root 
-    }
-    let adObserver = new IntersectionObserver(this.lazyRenderAds.bind(this), options)
-    for(div_name in this.ads){
-        this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
-        var destination = document.getElementById(div_name);
-        adObserver.observe(destination);
-    }
-    this.helper.log("-----------------------------------Waiting for adposition to come into view ... -------------------------------------------------");
-
-}
-
 Adhese.prototype.lazyRenderAds = function(changes, observer){
     changes.forEach(element => {
         if(!element.target.dataset.loaded && element.intersectionRatio === 1){
-            this.helper.log(element.target.id + " Became visible! Rendering Ad in position.");
+            this.helper.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", element.target.id + " Became visible! Rendering Ad in position.");
             this.renderAd(element.target.id);
         }
     });
