@@ -91,9 +91,6 @@
 	 this.config.logSafeframeMessages = options.safeframeMsg || this.logSafeframeMessages;
 
  	this.registerRequestParameter('rn', Math.round(Math.random()*10000));
-  	if(typeof(Fingerprint) === "function"){
-      	this.registerRequestParameter('fp', new Fingerprint({canvas: true}).get());
-  	}
 	this.registerRequestParameter('pr', (window.devicePixelRatio || 1));
 	if (typeof options.logReferrer == 'undefined' || options.logReferrer == true) {
 		this.registerRequestParameter('re', this.helper.base64.urlencode(document.referrer.substr(0, 200)));
