@@ -101,15 +101,11 @@ Adhese.prototype.init = function(options) {
         this.config.safeframe = false;
     } else {
         this.config.safeframe = options.safeframe;
-        this.initSafeFrame(options.safeframeContainerID);
+        this.config.safeframeContainerID = typeof options.safeframeContainerID !== "undefined" ? options.safeframeContainerID : "destination";
+        this.safeframe = new this.SafeFrame(this.config.poolHost, this.config.safeframeContainerID, this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
     }
     this.config.logSafeframeMessages = options.safeframeMsg || this.logSafeframeMessages;
     this.registerRequestParameter("rn", Math.round(Math.random() * 1e4));
-    if (typeof Fingerprint === "function") {
-        this.registerRequestParameter("fp", new Fingerprint({
-            canvas: true
-        }).get());
-    }
     this.registerRequestParameter("pr", window.devicePixelRatio || 1);
     if (typeof options.logReferrer == "undefined" || options.logReferrer == true) {
         this.registerRequestParameter("re", this.helper.base64.urlencode(document.referrer.substr(0, 200)));
@@ -143,16 +139,6 @@ Adhese.prototype.init = function(options) {
     this.checkAdheseInfo();
     this.helper.log("Adhese: initialized with config:", this.config);
     this.FindSlots(this.config);
-};
-
-Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
-    if (!this.safeframe) {
-        if (safeframeContainerID) {
-            this.safeframe = new this.SafeFrame(this.config.poolHost, safeframeContainerID, this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
-        } else {
-            this.safeframe = new this.SafeFrame(this.config.poolHost, "destination", this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
-        }
-    }
 };
 
 Adhese.prototype.registerRequestParameter = function(key, value) {

@@ -86,7 +86,8 @@
  		this.config.safeframe = false;
  	} else {
 		this.config.safeframe = options.safeframe;
-		this.initSafeFrame(options.safeframeContainerID);
+		this.config.safeframeContainerID = typeof options.safeframeContainerID !== "undefined" ? options.safeframeContainerID : "destination";
+		this.safeframe = new this.SafeFrame(this.config.poolHost, this.config.safeframeContainerID, this.config.viewabilityTracking,this.config.logSafeframeMessages, this.helper);	
 	 }
 	 this.config.logSafeframeMessages = options.safeframeMsg || this.logSafeframeMessages;
 
@@ -130,15 +131,12 @@
 	
  };
 
-Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
-	if (!this.safeframe) {
-		if (safeframeContainerID) {
-			this.safeframe = new this.SafeFrame(this.config.poolHost, safeframeContainerID, this.config.viewabilityTracking,this.config.logSafeframeMessages, this.helper);	
-		} else {
-			this.safeframe = new this.SafeFrame(this.config.poolHost, "destination",this.config.viewabilityTracking, this.config.logSafeframeMessages, this.helper);
-		}		
-	}	
-}
+// Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
+// 	if (!this.safeframe) {
+
+// 		}		
+// 	}	
+// }
 
 /**
  * Function to add target parameters to an Adhese instance. These parameters will be appended to each request.
