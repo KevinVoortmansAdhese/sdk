@@ -95,10 +95,10 @@
       	this.registerRequestParameter('fp', new Fingerprint({canvas: true}).get());
   	}
 	this.registerRequestParameter('pr', (window.devicePixelRatio || 1));
-	if (typeof options.referrer == 'undefined' || options.referrer == true) {
+	if (typeof options.logReferrer == 'undefined' || options.logReferrer == true) {
 		this.registerRequestParameter('re', this.helper.base64.urlencode(document.referrer.substr(0, 200)));
 	}
-	if (typeof options.url == 'undefined' || options.url == true) {
+	if (typeof options.logUrl == 'undefined' || options.logUrl == true) {
 		this.registerRequestParameter('ur', this.helper.base64.urlencode(window.location.href));
 	}
  	this.userAgent = this.helper.getUserAgent();

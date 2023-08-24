@@ -73,8 +73,8 @@
 			location:  getLocation(),//can be either a string containing the actual location to be passed to the adserver or a function to be called to retrieve the location
 			safeframe: true, //true/false, for switching on the use of the IAB SafeFrame standard, the default value is false
 			//safeframeContainerID: "destination",//string containing the object property of Ad to be used as id for the safeframe container
-			referrer: true,  //true/false,for adding the document.referrer to the req as a base64 string, the default value is true
-			url: true, //true/false, for adding the window.location.href to the req as a base64 string, the default value is true
+			logReferrer: true,  //true/false,for adding the document.referrer to the req as a base64 string, the default value is true
+			logUrl: true, //true/false, for adding the window.location.href to the req as a base64 string, the default value is true
 			//viewabilityTracking: false, // can be true(standard settings) / false / custom settings
 			viewabilityTracking: { // can be true(standard settings) / false / custom settings
 				settings: { 
