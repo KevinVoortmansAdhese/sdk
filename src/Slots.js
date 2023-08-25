@@ -29,7 +29,7 @@ Adhese.prototype.FindSlots = function(options) {
             options.slot = slot;
 
             options.lazyRequest = typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true" ? true : false;
-            options.disableLazyRendering = typeof slots[x].dataset.lazyrender !== "undefined" && slots[x].dataset.lazyrender === "false" ? true : false;
+            options.disableLazyRender = typeof slots[x].dataset.disablelazyrender !== "undefined" && slots[x].dataset.disablelazyrender === "true" ? true : false;
 
             this.ads[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
             this.helper.log("Slot Found for settings:", this.ads[slots[x].dataset.format + "_" + slot])

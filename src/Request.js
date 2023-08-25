@@ -18,6 +18,7 @@ Adhese.prototype.requestAds = async function(){
 		this.getPreviewAds();
 	}
 	if (filtered_ads.loadLater.length !== 0){
+		this.helper.log("************************************ Setting up lazy Requesting *******************************************************");
 		this.helper.log("Found Postions with Lazy Requesting Enabled. Only requesting ads when the position becomes visible")
 		this.observeRequests(filtered_ads.loadLater);
 	}
@@ -25,7 +26,8 @@ Adhese.prototype.requestAds = async function(){
         this.helper.log("Lazy Rendering Not Active! Rendering all positions");
         this.renderAds();
     }else{
-        this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyloading);
+		this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
+		this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyloading);
         this.observeAds();
     }
 }

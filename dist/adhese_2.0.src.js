@@ -685,6 +685,33 @@ Adhese.prototype.addObserver = function(type, callback) {
     this.observers[type] = new IntersectionObserver(callback.bind(this), options);
 };
 
+Adhese.prototype.observeAds = function() {
+    this.addObserver("ad", this.lazyRenderAds);
+    for (div_name in this.ads) {
+        if (!this.ads[div_name].options.lazyRequest) {
+            if (!this.ads[div_name].options.disableLazyRender) {
+                this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
+                var destination = document.getElementById(div_name);
+                this.observers.ad.observe(destination);
+            } else {
+                this.helper.log("Lazy Rendering disabled for " + div_name + " position. Rendering the ad!");
+                this.renderAd(div_name);
+            }
+        }
+    }
+};
+
+Adhese.prototype.observeRequests = function(ads) {
+    this.addObserver("request", this.lazyRequestAds);
+    for (div_name in this.ads) {
+        if (this.ads[div_name].options.lazyRequest) {
+            this.helper.log("enabled an obverser for: " + div_name + " Requesting ad when div becomes visible.");
+            var destination = document.getElementById(div_name);
+            this.observers.request.observe(destination);
+        }
+    }
+};
+
 Adhese.prototype.checkPreview = function() {
     this.previewFormats = {};
     if (!this.config.previewHost) {
@@ -860,18 +887,6 @@ Adhese.prototype.closeInfoSign = function() {
     infoMsg.style.display = "none";
 };
 
-Adhese.prototype.observeAds = function() {
-    this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
-    this.addObserver("ad", this.lazyRenderAds);
-    for (div_name in this.ads) {
-        if (!this.ads[div_name].options.lazyRequest) {
-            this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
-            var destination = document.getElementById(div_name);
-            this.observers.ad.observe(destination);
-        }
-    }
-};
-
 Adhese.prototype.lazyRenderAds = function(changes, observer) {
     changes.forEach(element => {
         if (!element.target.dataset.loaded && element.intersectionRatio === 1) {
@@ -955,6 +970,7 @@ Adhese.prototype.requestAds = async function() {
         this.getPreviewAds();
     }
     if (filtered_ads.loadLater.length !== 0) {
+        this.helper.log("************************************ Setting up lazy Requesting *******************************************************");
         this.helper.log("Found Postions with Lazy Requesting Enabled. Only requesting ads when the position becomes visible");
         this.observeRequests(filtered_ads.loadLater);
     }
@@ -962,6 +978,7 @@ Adhese.prototype.requestAds = async function() {
         this.helper.log("Lazy Rendering Not Active! Rendering all positions");
         this.renderAds();
     } else {
+        this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
         this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyloading);
         this.observeAds();
     }
@@ -1027,18 +1044,6 @@ Adhese.prototype.getPreviewAds = async function() {
         }
     }
     this.renderPreviewAds();
-};
-
-Adhese.prototype.observeRequests = function(ads) {
-    this.helper.log("************************************ Setting up lazy Requesting *******************************************************");
-    this.addObserver("request", this.lazyRequestAds);
-    for (div_name in this.ads) {
-        if (this.ads[div_name].options.lazyRequest) {
-            this.helper.log("enabled an obverser for: " + div_name + " Requesting ad when div becomes visible.");
-            var destination = document.getElementById(div_name);
-            this.observers.request.observe(destination);
-        }
-    }
 };
 
 Adhese.prototype.lazyRequestAds = function(changes, observer) {
@@ -1156,7 +1161,7 @@ Adhese.prototype.FindSlots = function(options) {
             options.parameters = typeof slots[x].dataset.parameters !== "undefined" ? JSON.parse(slots[x].dataset.parameters) : {};
             options.slot = slot;
             options.lazyRequest = typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true" ? true : false;
-            options.disableLazyRendering = typeof slots[x].dataset.lazyrender !== "undefined" && slots[x].dataset.lazyrender === "false" ? true : false;
+            options.disableLazyRender = typeof slots[x].dataset.disablelazyrender !== "undefined" && slots[x].dataset.disablelazyrender === "true" ? true : false;
             this.ads[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
             this.helper.log("Slot Found for settings:", this.ads[slots[x].dataset.format + "_" + slot]);
         }

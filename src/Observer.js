@@ -14,19 +14,22 @@ Adhese.prototype.addObserver = function (type, callback){
 }
 
 Adhese.prototype.observeAds = function(){
-    this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
     this.addObserver("ad", this.lazyRenderAds)
     for(div_name in this.ads){
         if(!this.ads[div_name].options.lazyRequest){
-            this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
-            var destination = document.getElementById(div_name);
-            this.observers.ad.observe(destination);
+            if(!this.ads[div_name].options.disableLazyRender){
+                this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
+                var destination = document.getElementById(div_name);
+                this.observers.ad.observe(destination);
+            }else{
+                this.helper.log("Lazy Rendering disabled for "+div_name+" position. Rendering the ad!");
+                this.renderAd(div_name);
+            }
         }
     }
 }
 
 Adhese.prototype.observeRequests = function(ads){
-    this.helper.log("************************************ Setting up lazy Requesting *******************************************************");
 	this.addObserver("request", this.lazyRequestAds)
     for(div_name in this.ads){
 		if(this.ads[div_name].options.lazyRequest){
