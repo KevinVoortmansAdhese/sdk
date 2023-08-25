@@ -954,7 +954,7 @@ Adhese.prototype.friendlyIframeRender = function(ad, destination_ID) {
 Adhese.prototype.requestAds = async function() {
     this.helper.log("----------------------------------- Requesting Ads from the adserver -------------------------------------------------");
     let filtered_ads = this.filterAds(this.ads);
-    let results = this.config.requestType === "GET" ? await this.getAds(filtered_ads.loadNow) : await this.postAds(filtered_ads.loadNow);
+    let results = await this.getAds(filtered_ads.loadNow);
     this.helper.log("The following Ads are returned from the request", results);
     for (x = 0; x < results.length; x++) {
         for (var key in this.ads) {
@@ -967,6 +967,7 @@ Adhese.prototype.requestAds = async function() {
         }
     }
     if (typeof this.previewActive !== "undefined" && this.previewActive) {
+        this.helper.log("************************************ Setting up a Preview *******************************************************");
         this.getPreviewAds();
     }
     if (filtered_ads.loadLater.length !== 0) {
@@ -985,32 +986,25 @@ Adhese.prototype.requestAds = async function() {
 };
 
 Adhese.prototype.getAds = async function(ads, previewURL) {
-    this.helper.log("Using GET to Fetch Ads from the adserver");
-    const url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getMultipleRequestUri(ads, {
-        type: "json"
-    });
-    this.helper.log("Fetching Ads for all positions with url: ", url);
     try {
-        const call = await fetch(url);
-        const result = await call.json();
-        return result;
-    } catch (err) {
-        console.log(err);
-    }
-};
-
-Adhese.prototype.postAds = async function(ads) {
-    this.helper.log("Using POST to Fetch Ads from the adserver");
-    try {
-        const requestbody = this.getRequestPayload(ads, this.config);
-        this.helper.log("Post settings used are:", requestbody);
-        const call = await fetch(this.config.host + "json", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestbody)
-        });
+        this.helper.log("Fetching ads for the following positions:", ads);
+        let url = "";
+        let options = {};
+        if (this.config.requestType === "GET" || typeof previewURL !== "undefined") {
+            url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getMultipleRequestUri(ads, {
+                type: "json"
+            });
+        } else {
+            url = this.config.host + "json";
+            options = {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(this.getRequestPayload(ads, this.config))
+            };
+        }
+        const call = await fetch(url, options);
         const result = await call.json();
         return result;
     } catch (err) {
@@ -1036,7 +1030,7 @@ Adhese.prototype.filterAds = function(ads) {
 
 Adhese.prototype.getPreviewAds = async function() {
     for (let key in this.previewAds) {
-        results = await this.getAds(this.previewAds[key].previewUrl);
+        results = await this.getAds(this.previewAds, this.previewAds[key].previewUrl);
         for (x = 0; x < results.length; x++) {
             if (this.previewAds[key].format === results[x].adFormat) results[x].destination = this.previewAds[key].containingElementId;
             this.previewAds[key].ToRenderAd = results[x];
@@ -1050,11 +1044,12 @@ Adhese.prototype.lazyRequestAds = function(changes, observer) {
     changes.forEach(async element => {
         if (!element.target.dataset.loaded && element.intersectionRatio === 1) {
             this.helper.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", element.target.id + " Became visible! Requesting and rendering Ad in position.");
-            let results = this.config.requestType === "GET" ? await this.getAds([ this.ads[element.target.id] ]) : await this.postAds([ this.ads[element.target.id] ]);
+            let results = await this.getAds([ this.ads[element.target.id] ]);
             results[0].destination = this.ads[element.target.id].containingElementId;
             this.helper.log("The following ad is returned", results[0]);
             this.ads[element.target.id].ToRenderAd = results[0];
             if (this.config.safeframe === true) this.safeframe.addPositions([ this.ads[element.target.id].ToRenderAd ]);
+            this.helper.log("Rendering Lazy Requested Ad for: " + element.target.id);
             this.renderAd(element.target.id);
         }
     });
