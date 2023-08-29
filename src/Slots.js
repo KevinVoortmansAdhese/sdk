@@ -5,9 +5,6 @@ Adhese.prototype.FindSlots = function(options) {
         const format = slots[x].dataset.format;
         const slot = slots[x].dataset.slot !== undefined ? slots[x].dataset.slot : this.CountSlot(slots[x].dataset.format);
         const slot_id = format + "_" + slot
-
-        //slots[x].id = slot_id;
-        //options.containerId = slot_id;
         options.containingElementID = this.createSlotDestination(slots[x], slot_id);
         options.loaded = false;
         options.toRenderAd = new Array;
@@ -28,15 +25,32 @@ Adhese.prototype.FindSlots = function(options) {
             options.parameters = typeof slots[x].dataset.parameters !== "undefined" ? JSON.parse(slots[x].dataset.parameters) : {};
             options.slot = slot;
 
-            options.lazyRequest = typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true" ? true : false;
             options.disableLazyRender = typeof slots[x].dataset.disablelazyrender !== "undefined" && slots[x].dataset.disablelazyrender === "true" ? true : false;
 
-            this.ads[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
-            this.helper.log("Slot Found for settings:", this.ads[slots[x].dataset.format + "_" + slot])
+            if (typeof slots[x].dataset.maxads !== "undefined" && slots[x].dataset.maxads){
+                if(typeof this.StackAd !== "undefined"){
+                    if(typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true"){
+                        this.stackAds.lazyRequest[slots[x].dataset.format + "_" + slot] = new this.StackAd(this, slots[x].dataset.format, options, slots[x].dataset.maxads);
+                        this.helper.log("Stack Ad Slot Found for Lazy Requesting with settings:", this.stackAds.lazyRequest[slots[x].dataset.format + "_" + slot])
+                    }else{
+                        this.stackAds.initRequest[slots[x].dataset.format + "_" + slot] = new this.StackAd(this, slots[x].dataset.format, options, slots[x].dataset.maxads);
+                        this.helper.log("Stack Ad Slot Found for Init requesting with settings:", this.stackAds.initRequest[slots[x].dataset.format + "_" + slot])
+                    }
+                }else{
+                    this.helper.log("Stack Ads not enabled in this library. Contact Adhese support if you need this.");
+                }
+            }else{
+                if(typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true"){
+                    this.ads.lazyRequest[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
+                    this.helper.log("Slot Found for Lazy Requesting with settings:", this.ads.lazyRequest[slots[x].dataset.format + "_" + slot])
+                }else{
+                    this.ads.initRequest[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
+                    this.helper.log("Slot Found for Init requesting with settings:", this.ads.initRequest[slots[x].dataset.format + "_" + slot])
+                }
+            }
         }
-        
     }
-    this.requestAds();
+    this.FindAds();
 }
 
 

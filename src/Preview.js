@@ -103,6 +103,34 @@ Adhese.prototype.checkPreviewList = function() {
 		this.helper.createCookie("adhese_preview_list",JSON.stringify(previewAds),0);	
 	}
 }
+/**
+ * The getPreviewAds function Fetches the preview Ad from the adserver.
+ */
+Adhese.prototype.getPreviewAds = async function(){
+    for (let key in this.previewAds){
+		results = await this.getAds(this.previewAds, this.previewAds[key].previewUrl);
+		for (x=0;x<results.length; x++){
+			if (this.previewAds[key].format === results[x].adFormat)
+				results[x].destination = this.previewAds[key].containingElementId;
+				this.previewAds[key].ToRenderAd = results[x];
+				if (this.config.safeframe === true)
+                    this.safeframe.addPositions([results[x]]);
+		}
+	}
+	this.renderPreviewAds();
+}
+/**
+ * The getPreviewAds function Renders the preview Ad in the page.
+ */
+Adhese.prototype.renderPreviewAds = function(){
+    for(let key in this.previewAds){
+        if (this.config.safeframe === true)
+            this.safeframe.render(this.previewAds[key].containingElementId);
+        else
+            this.friendlyIframeRender(this.previewAds[key].ToRenderAd , this.previewAds[key].containingElementId)
+    }
+    this.showPreviewSign();
+}
 
 /**
  * The showPreviewSign function displays a message to inform the user that the live preview is active.
@@ -177,4 +205,3 @@ Adhese.prototype.closeInfoSign = function() {
 	infoMsg.style.display = 'none';
 
 };
-

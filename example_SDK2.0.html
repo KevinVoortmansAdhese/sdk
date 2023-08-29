@@ -25,12 +25,18 @@
  			containerId: "", //An optional string defining this Ad's container, intended to be used in pages where the same slot is requested multiple times and needs to be visualised in a different element (ex.: endlessly scrolling web pages)
 			parameters: {} //An optional object containing target parameters for this ad. The object keys are the request prefixes, the values an array of strings or ints.
 		});
-	</script> -->
-	
+	</script>
+
+		https://ads-demo.adhese.com/m/stack/sl_demo_-textad/?max_ads=2
+
+
+-->
+	<div style="background-color: purple; height: 1000px;"></div>
+	<div class="adunit" data-format="newstack" data-maxAds=1></div>
 	<div style="background-color: red; height: 2000px;"></div>
-	<div class="adunit" data-format="300x250" data-slot="bottom1" data-disableLazyRender="true"></div>
+	<div class="adunit" data-format="300x250" data-disableLazyRender="true"></div>
 	<div style="background-color: blue; height: 2000px;"></div>
-	<div class="adunit" data-format="300x250" data-lazyRequest="true"></div> 
+	<div class="adunit" data-format="300x250" data-slot="bottom1" data-lazyRequest="true"></div> 
 	<!-- data-disablelazyRender="false" -->
 
 
@@ -58,7 +64,8 @@
 			// });
 		
 	</script> -->
-	<script type="text/javascript" charset="utf-8" src="dist/adhese_2.0.src.js"></script>
+	<!-- <script type="text/javascript" charset="utf-8" src="dist/adhese_2.0.src.js"></script> -->
+	<script type="text/javascript" charset="utf-8" src="dist/adhese_stack_2.0.src.js"></script>
 	<script type="text/javascript">
 		function getLocation() {
 			return "_demo_";

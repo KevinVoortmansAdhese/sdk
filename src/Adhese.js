@@ -6,8 +6,15 @@
  	this.config = {debug:false};
  	this.request = {};
  	this.requestExtra = [];
- 	this.ads = [];
+ 	this.ads = {
+		lazyRequest: {},
+		initRequest: {}
+	};
 	this.previewAds = [];
+	this.stackAds = {
+		lazyRequest: {},
+		initRequest: {}
+	};
  	this.that = this;
  	this.helper = new this.Helper();
  	this.detection = new this.Detection();

@@ -2,47 +2,36 @@ Adhese.prototype.lazyRenderAds = function(changes, observer){
     changes.forEach(element => {
         if(!element.target.dataset.loaded && element.intersectionRatio === 1){
             this.helper.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", element.target.id + " Became visible! Rendering Ad in position.");
-            this.renderAd(element.target.id);
+            this.renderAd(this.ads.initRequest[element.target.id]);
         }
     });
 }
 
-Adhese.prototype.renderAds = function(){
+Adhese.prototype.renderAds = function(ads){
     this.helper.log("----------------------------------- Rendering Ads Without lazy loading -------------------------------------------------");
-    for(let adPosition in this.ads){
-        this.renderAd(adPosition);
+    for(let adPosition in ads){
+        this.renderAd(ads[adPosition]);
         this.helper.log("Rendered Position: " + adPosition)
     }
 }
 
-Adhese.prototype.renderAd = function(adPosition){
-    element = document.getElementById(this.ads[adPosition].containingElementId);
+Adhese.prototype.renderAd = function(ad){
+    element = document.getElementById(ad.containingElementId);
     if (this.config.safeframe === true)
-        this.safeframe.render(this.ads[adPosition].containingElementId);
+        this.safeframe.render(ad.containingElementId);
     else
-        this.friendlyIframeRender(this.ads[adPosition].ToRenderAd , this.ads[adPosition].containingElementId)
+        this.friendlyIframeRender(ad.ToRenderAd , ad.containingElementId)
     
-    this.helper.log("Firing Impression pixel for: "+adPosition);
-    this.helper.addTrackingPixel(this.ads[adPosition].ToRenderAd.impressionCounter)
+    this.helper.log("Firing Impression pixel for: "+ad.containingElementId);
+    this.helper.addTrackingPixel(ad.ToRenderAd.impressionCounter)
 
-    if (this.viewability && this.ads[adPosition].ToRenderAd.viewableImpressionCounter && this.ads[adPosition].ToRenderAd.viewableImpressionCounter !== '') {
-        this.viewability.trackers[adPosition] = this.ads[adPosition].ToRenderAd.viewableImpressionCounter;
-        this.viewability.adObserver.observe(document.getElementById(adPosition));
+    if (this.viewability && ad.ToRenderAd.viewableImpressionCounter && ad.ToRenderAd.viewableImpressionCounter !== '') {
+        this.viewability.trackers[ad.containingElementId] = ad.ToRenderAd.viewableImpressionCounter;
+        this.viewability.adObserver.observe(document.getElementById(ad.containingElementId));
     }
-    document.getElementById(adPosition).dataset.loaded = true;
-    this.AdheseInfo(this.ads[adPosition].ToRenderAd, document.getElementById(adPosition));
+    document.getElementById(ad.containingElementId).dataset.loaded = true;
+    this.AdheseInfo(ad.ToRenderAd, document.getElementById(ad.containingElementId).parentNode);
 }
-
-Adhese.prototype.renderPreviewAds = function(){
-    for(let key in this.previewAds){
-        if (this.config.safeframe === true)
-            this.safeframe.render(this.previewAds[key].containingElementId);
-        else
-            this.friendlyIframeRender(this.previewAds[key].ToRenderAd , this.previewAds[key].containingElementId)
-    }
-    this.showPreviewSign();
-}
-
 
 Adhese.prototype.AdheseInfo = function(ad, destination){
     let adhese_info = document.createElement("AdheseInfo");

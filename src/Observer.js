@@ -13,17 +13,17 @@ Adhese.prototype.addObserver = function (type, callback){
     this.observers[type] = new IntersectionObserver(callback.bind(this), options)
 }
 
-Adhese.prototype.observeAds = function(){
+Adhese.prototype.observeAds = function(ads){
     this.addObserver("ad", this.lazyRenderAds)
-    for(div_name in this.ads){
-        if(!this.ads[div_name].options.lazyRequest){
-            if(!this.ads[div_name].options.disableLazyRender){
+    for(div_name in ads){
+        if(!ads[div_name].options.lazyRequest){
+            if(!ads[div_name].options.disableLazyRender){
                 this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
                 var destination = document.getElementById(div_name);
                 this.observers.ad.observe(destination);
             }else{
                 this.helper.log("Lazy Rendering disabled for "+div_name+" position. Rendering the ad!");
-                this.renderAd(div_name);
+                this.renderAd(ads[div_name]);
             }
         }
     }
@@ -31,11 +31,9 @@ Adhese.prototype.observeAds = function(){
 
 Adhese.prototype.observeRequests = function(ads){
 	this.addObserver("request", this.lazyRequestAds)
-    for(div_name in this.ads){
-		if(this.ads[div_name].options.lazyRequest){
-			this.helper.log("enabled an obverser for: " + div_name + " Requesting ad when div becomes visible.");
-			var destination = document.getElementById(div_name);
-			this.observers.request.observe(destination);
-		}
+    for(div_name in ads){
+        this.helper.log("enabled an obverser for: " + div_name + " Requesting ad when div becomes visible.");
+        var destination = document.getElementById(div_name);
+        this.observers.request.observe(destination);
     }
 }

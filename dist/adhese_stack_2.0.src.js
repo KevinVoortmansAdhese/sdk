@@ -1316,6 +1316,124 @@ Adhese.prototype.Events.prototype.remove = function(type, handler, element) {
     }
 };
 
+Adhese.prototype.observeStackAds = function(ads) {
+    this.addObserver("ad", this.lazyRenderStackAds);
+    for (div_name in ads) {
+        if (!ads[div_name].options.lazyRequest) {
+            if (!ads[div_name].options.disableLazyRender) {
+                this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
+                var destination = document.getElementById(div_name);
+                this.observers.ad.observe(destination);
+            } else {
+                this.helper.log("Lazy Rendering disabled for " + div_name + " position. Rendering the ad!");
+                this.renderStackAd(ads[div_name]);
+            }
+        }
+    }
+};
+
+Adhese.prototype.lazyRenderStackAds = function(changes, observer) {
+    changes.forEach(element => {
+        if (!element.target.dataset.loaded && element.intersectionRatio === 1) {
+            this.helper.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", element.target.id + " Became visible! Rendering Stack Ad in position.");
+            this.renderStackAd(this.stackAds.initRequest[element.target.id]);
+        }
+    });
+};
+
+Adhese.prototype.renderStackAds = function(ads) {
+    this.helper.log("----------------------------------- Rendering Ads Without lazy loading -------------------------------------------------");
+    for (let adPosition in ads) {
+        this.renderStackAd(ads[adPosition]);
+        this.helper.log("Rendered Position: " + adPosition);
+    }
+};
+
+Adhese.prototype.renderStackAd = function(ad) {
+    this.helper.log("Rendering Stack Ads's", ad.ToRenderAds);
+};
+
+Adhese.prototype.requestStackAds = async function(ads) {
+    for (ad in ads) {
+        let results = await this.getStackAds(ads[ad]);
+        this.helper.log("We found this ad for position: " + ad, results[x]);
+        ads[ad].ToRenderAds = results.ads;
+    }
+};
+
+Adhese.prototype.getStackAds = async function(ads, previewURL) {
+    try {
+        this.helper.log("Fetching Stackads for the following positions:", ads);
+        let url = "";
+        let options = {};
+        if (this.config.requestType === "GET" || typeof previewURL !== "undefined") {
+            url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getRequestUri(ads, {
+                type: "stack",
+                "max-ads": 1
+            });
+        } else {
+            url = this.config.host + "json";
+            options = {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(this.getRequestPayload(ads, this.config))
+            };
+        }
+        const call = await fetch(url, options);
+        const result = await call.json();
+        return result;
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+Adhese.prototype.StackAd = function(adhese, formatCode, options, maxAds) {
+    var defaults = {
+        write: false
+    };
+    this.format = options && options.format ? options.format : formatCode;
+    this.options = adhese.helper.merge(defaults, options);
+    this.uid = formatCode;
+    this.safeframe = options && options.safeframe ? options.safeframe : false;
+    this.maxAds = maxAds;
+    this.ToRenderAds = [];
+    if (this.options.position != undefined) {
+        this.uid = this.options.position + this.format;
+    }
+    this.slotName = this.getSlotName(this);
+    this.containingElementId = options.containingElementID;
+    if (options && options.parameters) this.parameters = options.parameters; else this.parameters = {};
+    return this;
+};
+
+Adhese.prototype.StackAd.prototype.getContainingElementId = function() {
+    if (this.options.slotName && this.containerId != "") {
+        return this.options.slotName + "_" + this.containerId;
+    } else if (this.options.slotName) {
+        return this.options.slotName;
+    } else if (this.containerId != "") {
+        return this.uid + "_" + this.containerId;
+    } else {
+        return this.uid;
+    }
+};
+
+Adhese.prototype.StackAd.prototype.getSlotName = function(adhese) {
+    var u = "";
+    if (this.options.position && this.options.location) {
+        u = this.options.location + this.options.position;
+    } else if (this.options.position) {
+        u = adhese.config.location + this.options.position;
+    } else if (this.options.location) {
+        u = this.options.location;
+    } else {
+        u = adhese.config.location;
+    }
+    return u + "-" + this.format;
+};
+
 Adhese.prototype.SafeFrame = function(poolHost, containerID, viewabilityTracking, messages, helper) {
     this.poolHost = poolHost;
     this.containerID = containerID ? containerID : "destination";
