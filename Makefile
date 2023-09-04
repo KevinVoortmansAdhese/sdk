@@ -33,7 +33,7 @@ docs:
 	jsdoc --verbose -c conf/jsdoc.conf
 
 demo-sdk2:
-	uglifyjs src/*.js src/visible/*.js src/detection/Detection.js src/events/*.js src/safeframe/SafeFrame.js src/safeframe/js/lib/base.js src/safeframe/js/host/host.js src/safeframe/js/lib/boot.js src/safeframe/js/ext/ext.js -b -o dist/adhese_2.0.src.js
+	uglifyjs src/*.js src/visible/*.js src/track/*.js src/detection/Detection.js src/events/*.js src/safeframe/SafeFrame.js src/safeframe/js/lib/base.js src/safeframe/js/host/host.js src/safeframe/js/lib/boot.js src/safeframe/js/ext/ext.js -b -o dist/adhese_2.0.src.js
 
 demo-stack-sdk2:
-	uglifyjs src/*.js src/visible/*.js src/detection/Detection.js src/events/*.js src/stack/*.js src/safeframe/SafeFrame.js src/safeframe/js/lib/base.js src/safeframe/js/host/host.js src/safeframe/js/lib/boot.js src/safeframe/js/ext/ext.js -b -o dist/adhese_stack_2.0.src.js
+	uglifyjs src/*.js src/visible/*.js src/track/*.js src/consent/*.js src/detection/Detection.js src/events/*.js src/stack/*.js src/safeframe/SafeFrame.js src/safeframe/js/lib/base.js src/safeframe/js/host/host.js src/safeframe/js/lib/boot.js src/safeframe/js/ext/ext.js -b -o dist/adhese_stack_2.0.src.js

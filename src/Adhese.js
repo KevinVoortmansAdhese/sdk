@@ -131,20 +131,21 @@
 
     this.config.previewExclusive = false;
     if(options.previewExclusive) this.config.previewExclusive = options.previewExclusive;
+
 	this.checkPreview();
 	this.checkAdheseInfo();
+	this.helper.log('Adhese: initialized with config:', this.config);
 
- 	this.helper.log('Adhese: initialized with config:', this.config);
-	this.FindSlots(this.config);
-	
+	this.config.tcfRequired = options.tcfRequired || typeof options.tcfRequired == "undefined" ? true : false;
+	if (this.config.tcfRequired){
+		this.helper.log("Waiting to request ads untill we have found a consentstring!")
+		this.checkConsent();
+	}else{
+		this.helper.log("Requesting ads without TCF consentstring!")
+		this.FindSlots(this.config);
+	}
  };
 
-// Adhese.prototype.initSafeFrame = function(safeframeContainerID) {
-// 	if (!this.safeframe) {
-
-// 		}		
-// 	}	
-// }
 
 /**
  * Function to add target parameters to an Adhese instance. These parameters will be appended to each request.
@@ -290,29 +291,18 @@ Adhese.prototype.addRequestString = function(value) {
 //  	}
 //  };
 
-/**
- * Creates an invisible pixel in the document that sends a request to Adhese for tracking an impression or action.
- * @param  {string} uri The URI used for tracking.
- * @return {void}
- */
-Adhese.prototype.track = function(uri) {
-	this.helper.addTrackingPixel(uri);
-};
 
-Adhese.prototype.trackByUrl = function (uri) {
-  this.helper.addTrackingPixel(uri);
-};
 
-/**
- * render the markup for the given ad and fire of a "paid impression" tracker
- */
-Adhese.prototype.renderAndTrackAd = function(ad) {
-    this.safeframe.render(ad.containingElementId);
-    AdheseAjax.request({
-        url: ad.tracker,
-        method: "get"
-    });
-};
+// /**
+//  * render the markup for the given ad and fire of a "paid impression" tracker
+//  */
+// Adhese.prototype.renderAndTrackAd = function(ad) {
+//     this.safeframe.render(ad.containingElementId);
+//     AdheseAjax.request({
+//         url: ad.tracker,
+//         method: "get"
+//     });
+// };
 
 /**
  * Generic syn method that passes the option object to the internal synching method for each known network.
