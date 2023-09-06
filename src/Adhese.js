@@ -136,7 +136,7 @@
 	this.checkAdheseInfo();
 	this.helper.log('Adhese: initialized with config:', this.config);
 
-	this.config.tcfRequired = options.tcfRequired || typeof options.tcfRequired == "undefined" ? true : false;
+	this.config.tcfRequired = options.tcfRequired;
 	if (this.config.tcfRequired){
 		this.helper.log("Waiting to request ads untill we have found a consentstring!")
 		this.checkConsent();
