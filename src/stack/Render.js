@@ -17,5 +17,6 @@ Adhese.prototype.renderStackAds = function(ads){
 }
 
 Adhese.prototype.renderStackAd = function(ad){
+    document.getElementById(ad.containingElementId).dataset.loaded = true;
     this.helper.log("Rendering Stack Ads's", ad.ToRenderAds);
 }
