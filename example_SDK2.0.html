@@ -17,7 +17,7 @@
 <body>
 	<!-- <div style="background-color: red; height: 2000px;"></div> -->
 	<!-- SYNCHROON-->
-	<div class="adunit" data-format="leaderboard" data-parameters='{"hv":"hallo", "hw":["hey", "hoe", "ist"]}'></div>
+	<div class="adunit" data-format="leaderboard" data-parameters='{"hv":"hallo", "hw":["hey", "hoe", "ist"]}' data-ignoreConsent=true ></div>
 	<!-- <div class="adunit" data-format="leaderboard"></div> -->
 	<!-- <script type="text/javascript" charset="utf-8">
 		adhese.tag("leaderboard", {
@@ -34,7 +34,7 @@
 
 -->
 	<div style="background-color: purple; height: 1000px;"></div>
-	<div class="adunit" data-format="newstack" data-maxAds=1></div>
+	<div class="adunit" data-format="newstack" data-maxAds=2></div>
 	<div style="background-color: red; height: 2000px;"></div>
 	<div class="adunit" data-format="300x250" data-disableLazyRender="true"></div>
 	<div style="background-color: blue; height: 2000px;"></div>
@@ -94,7 +94,7 @@
 				} 
 			},
 			// lazyloading: true
-			lazyloading: {
+			lazyLoading: {
 				settings: {
 					rootMargin: '200px', // extra space to take into account when rendering positions. Default = 200px
 					parent: null, // Parent object which to check against to see if the ad position is viewable - Default = null = viewport 
@@ -107,7 +107,8 @@
 				tm: "hello",
 				ft: ["value1", "value2"]
 			},
-			tcfRequired: true // true/false - Do we wait for a consentstring yes or no. Default = True
+			tcfRequired: true, // true/false - Do we wait for a consentstring yes or no. Default = False
+			userSync: true, // true/false - Does a usersync iframe needs to be placed.(only done if the consentstring is available) default = false
 		});		
 	</script>	
 </body>

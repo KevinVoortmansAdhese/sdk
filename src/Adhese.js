@@ -88,7 +88,8 @@
 		this.config.viewabilityTracking = false;
 	}
 
-	this.config.lazyloading = options.lazyloading ? options.lazyloading : false;
+	this.config.lazyLoading = options.lazyLoading ? options.lazyLoading : false;
+	this.config.userSync = options.userSync ? options.userSync : false;
 
  	if (typeof options.safeframe == 'undefined' || options.safeframe == false) {
  		this.config.safeframe = false;
@@ -139,7 +140,7 @@
 	this.config.tcfRequired = options.tcfRequired;
 	if (this.config.tcfRequired){
 		this.helper.log("Waiting to request ads untill we have found a consentstring!")
-		this.checkConsent();
+		this.checkTCFConsent();
 	}else{
 		this.helper.log("Requesting ads without TCF consentstring!")
 		this.FindSlots(this.config);

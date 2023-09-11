@@ -104,7 +104,8 @@ Adhese.prototype.init = function(options) {
     } else {
         this.config.viewabilityTracking = false;
     }
-    this.config.lazyloading = options.lazyloading ? options.lazyloading : false;
+    this.config.lazyLoading = options.lazyLoading ? options.lazyLoading : false;
+    this.config.userSync = options.userSync ? options.userSync : false;
     if (typeof options.safeframe == "undefined" || options.safeframe == false) {
         this.config.safeframe = false;
     } else {
@@ -146,7 +147,14 @@ Adhese.prototype.init = function(options) {
     this.checkPreview();
     this.checkAdheseInfo();
     this.helper.log("Adhese: initialized with config:", this.config);
-    this.FindSlots(this.config);
+    this.config.tcfRequired = options.tcfRequired;
+    if (this.config.tcfRequired) {
+        this.helper.log("Waiting to request ads untill we have found a consentstring!");
+        this.checkTCFConsent();
+    } else {
+        this.helper.log("Requesting ads without TCF consentstring!");
+        this.FindSlots(this.config);
+    }
 };
 
 Adhese.prototype.registerRequestParameter = function(key, value) {
@@ -174,22 +182,6 @@ Adhese.prototype.getBooleanConsent = function() {
 
 Adhese.prototype.addRequestString = function(value) {
     this.requestExtra.push(value);
-};
-
-Adhese.prototype.track = function(uri) {
-    this.helper.addTrackingPixel(uri);
-};
-
-Adhese.prototype.trackByUrl = function(uri) {
-    this.helper.addTrackingPixel(uri);
-};
-
-Adhese.prototype.renderAndTrackAd = function(ad) {
-    this.safeframe.render(ad.containingElementId);
-    AdheseAjax.request({
-        url: ad.tracker,
-        method: "get"
-    });
 };
 
 Adhese.prototype.syncUser = function(network, identification) {
@@ -684,10 +676,10 @@ Adhese.prototype.addObserver = function(type, callback) {
         rootMargin: "200px",
         threshold: 1
     };
-    if (typeof this.config.lazyloading === "object" && this.config.lazyloading.settings !== null) {
-        options.root = this.config.lazyloading.settings.parent !== undefined ? this.config.lazyloading.settings.parent : options.root, 
-        options.rootMargin = this.config.lazyloading.settings.rootMargin !== undefined ? this.config.lazyloading.settings.rootMargin : options.rootMargin, 
-        options.threshold = this.config.lazyloading.settings.threshold !== undefined ? this.config.lazyloading.settings.threshold : options.threshold;
+    if (typeof this.config.lazyLoading === "object" && this.config.lazyLoading.settings !== null) {
+        options.root = this.config.lazyLoading.settings.parent !== undefined ? this.config.lazyLoading.settings.parent : options.root, 
+        options.rootMargin = this.config.lazyLoading.settings.rootMargin !== undefined ? this.config.lazyLoading.settings.rootMargin : options.rootMargin, 
+        options.threshold = this.config.lazyLoading.settings.threshold !== undefined ? this.config.lazyLoading.settings.threshold : options.threshold;
     }
     this.observers[type] = new IntersectionObserver(callback.bind(this), options);
 };
@@ -976,23 +968,23 @@ Adhese.prototype.FindAds = async function() {
     }
     if (Object.keys(this.ads.initRequest).length !== 0) {
         await this.requestAds(this.ads.initRequest);
-        if (!this.config.lazyloading) {
+        if (!this.config.lazyLoading) {
             this.helper.log("Lazy Rendering Not Active! Rendering all positions");
             this.renderAds(this.ads.initRequest);
         } else {
             this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
-            this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyloading);
+            this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyLoading);
             this.observeAds(this.ads.initRequest);
         }
     }
     if (Object.keys(this.stackAds.initRequest).length !== 0) {
         await this.requestStackAds(this.stackAds.initRequest);
-        if (!this.config.lazyloading) {
+        if (!this.config.lazyLoading) {
             this.helper.log("Lazy Rendering Not Active! Rendering all Stack positions");
             this.renderStackAds(this.stackAds.initRequest);
         } else {
             this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
-            this.helper.log("Lazy Rendering Active! Rendering the stack ads when they come into view with the following options:", this.config.lazyloading);
+            this.helper.log("Lazy Rendering Active! Rendering the stack ads when they come into view with the following options:", this.config.lazyLoading);
             this.observeStackAds(this.stackAds.initRequest);
         }
     }
@@ -1274,6 +1266,43 @@ Adhese.prototype.enableViewabilityTracking = function(target, settings) {
     target.viewability.adObserver = new IntersectionObserver(target.viewability.intersectionCallback, observerOptions);
 };
 
+Adhese.prototype.track = function(uri) {
+    uri = this.config.host + "/track/";
+    https: for (var a in this.request) {
+        var s = a;
+        for (var x = 0; x < this.request[a].length; x++) {
+            s += this.request[a][x] + (this.request[a].length - 1 > x ? ";" : "");
+        }
+        uri += s + "/";
+    }
+    this.helper.addTrackingPixel(uri);
+};
+
+Adhese.prototype.trackByUrl = function(uri) {
+    this.helper.addTrackingPixel(uri);
+};
+
+Adhese.prototype.checkTCFConsent = async function() {
+    if (typeof __tcfapi === "function") {
+        __tcfapi("addEventListener", 2, this.tcfCallback.bind(this));
+    }
+};
+
+Adhese.prototype.tcfCallback = function(tcData, success) {
+    if (success && tcData.eventStatus === "tcloaded" != "") {
+        this.helper.log("logging consent string", tcData.tcString);
+        this.config.consentString = tcData.tcString;
+        this.registerRequestParameter("xt", tcData.tcString);
+        this.FindSlots(this.config);
+        if (this.config.userSync) {
+            this.usersync();
+        }
+    } else {
+        this.helper.log("Consent string not found yet, waiting.");
+        adhese.registerRequestParameter("tl", "none");
+    }
+};
+
 Adhese.prototype.Detection = function() {
     return this;
 };
@@ -1350,13 +1379,14 @@ Adhese.prototype.renderStackAds = function(ads) {
 };
 
 Adhese.prototype.renderStackAd = function(ad) {
+    document.getElementById(ad.containingElementId).dataset.loaded = true;
     this.helper.log("Rendering Stack Ads's", ad.ToRenderAds);
 };
 
 Adhese.prototype.requestStackAds = async function(ads) {
     for (ad in ads) {
         let results = await this.getStackAds(ads[ad]);
-        this.helper.log("We found this ad for position: " + ad, results[x]);
+        this.helper.log("We found this ad for position: " + ad, results.ads);
         ads[ad].ToRenderAds = results.ads;
     }
 };
@@ -1366,21 +1396,9 @@ Adhese.prototype.getStackAds = async function(ads, previewURL) {
         this.helper.log("Fetching Stackads for the following positions:", ads);
         let url = "";
         let options = {};
-        if (this.config.requestType === "GET" || typeof previewURL !== "undefined") {
-            url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getRequestUri(ads, {
-                type: "stack",
-                "max-ads": 1
-            });
-        } else {
-            url = this.config.host + "json";
-            options = {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(this.getRequestPayload(ads, this.config))
-            };
-        }
+        url = typeof previewURL !== "undefined" && previewURL ? previewURL : this.getRequestUri(ads, {
+            type: "stack"
+        });
         const call = await fetch(url, options);
         const result = await call.json();
         return result;
@@ -1432,6 +1450,20 @@ Adhese.prototype.StackAd.prototype.getSlotName = function(adhese) {
         u = adhese.config.location;
     }
     return u + "-" + this.format;
+};
+
+Adhese.prototype.usersync = function() {
+    if (typeof this.config.consentString !== "undefined") {
+        this.helper.log("Consentstring found! , placing usersync iframe!");
+        url = "https://user-sync.adhese.com/iframe/user_sync.html?";
+        url += "account=" + this.config.account;
+        url += "&gdpr=1&consentString=" + this.config.consentString;
+        iframe = document.createElement("iframe");
+        iframe.src = url;
+        document.body.appendChild(iframe);
+    } else {
+        this.helper.log("Can't find a consentstring, not usersyncing!");
+    }
 };
 
 Adhese.prototype.SafeFrame = function(poolHost, containerID, viewabilityTracking, messages, helper) {

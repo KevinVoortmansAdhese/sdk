@@ -6,24 +6,24 @@ Adhese.prototype.FindAds = async function(){
 	}
 	if (Object.keys(this.ads.initRequest).length !== 0){
 		await this.requestAds(this.ads.initRequest);
-		if(!this.config.lazyloading){
+		if(!this.config.lazyLoading){
 			this.helper.log("Lazy Rendering Not Active! Rendering all positions");
 			this.renderAds(this.ads.initRequest);
 		}else{
 			this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
-			this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyloading);
+			this.helper.log("Lazy Rendering Active! Rendering the ads when they come into view with the following options:", this.config.lazyLoading);
 			this.observeAds(this.ads.initRequest);
 		}
 	}
 	if (Object.keys(this.stackAds.initRequest).length !== 0){
 		// await this.requestStackAds(this.stackAds.initRequest); // Us this for the old endpoint
 		await this.requestStackAds(this.stackAds.initRequest); // use this for the new /m/stack endpoint
-		if(!this.config.lazyloading){
+		if(!this.config.lazyLoading){
 			this.helper.log("Lazy Rendering Not Active! Rendering all Stack positions");
 			this.renderStackAds(this.stackAds.initRequest);
 		}else{
 			this.helper.log("************************************ Setting up lazy Rendering *******************************************************");
-			this.helper.log("Lazy Rendering Active! Rendering the stack ads when they come into view with the following options:", this.config.lazyloading);
+			this.helper.log("Lazy Rendering Active! Rendering the stack ads when they come into view with the following options:", this.config.lazyLoading);
 			this.observeStackAds(this.stackAds.initRequest);
 		}
 	}

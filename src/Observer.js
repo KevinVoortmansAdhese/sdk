@@ -5,10 +5,10 @@ Adhese.prototype.addObserver = function (type, callback){
         rootMargin: '200px', // margin around root. Values are similar to css property. Unitless values not allowed 
         threshold: 1.0 // visible amount of item shown in relation to root 
     }
-    if (typeof this.config.lazyloading === 'object' && this.config.lazyloading.settings !== null) {
-            options.root = this.config.lazyloading.settings.parent !== undefined ? this.config.lazyloading.settings.parent : options.root, // relative to document viewport 
-            options.rootMargin = this.config.lazyloading.settings.rootMargin !== undefined ? this.config.lazyloading.settings.rootMargin : options.rootMargin, // margin around root. Values are similar to css property. Unitless values not allowed 
-            options.threshold = this.config.lazyloading.settings.threshold !== undefined ? this.config.lazyloading.settings.threshold : options.threshold // visible amount of item shown in relation to root 
+    if (typeof this.config.lazyLoading === 'object' && this.config.lazyLoading.settings !== null) {
+            options.root = this.config.lazyLoading.settings.parent !== undefined ? this.config.lazyLoading.settings.parent : options.root, // relative to document viewport 
+            options.rootMargin = this.config.lazyLoading.settings.rootMargin !== undefined ? this.config.lazyLoading.settings.rootMargin : options.rootMargin, // margin around root. Values are similar to css property. Unitless values not allowed 
+            options.threshold = this.config.lazyLoading.settings.threshold !== undefined ? this.config.lazyLoading.settings.threshold : options.threshold // visible amount of item shown in relation to root 
     }
     this.observers[type] = new IntersectionObserver(callback.bind(this), options)
 }
