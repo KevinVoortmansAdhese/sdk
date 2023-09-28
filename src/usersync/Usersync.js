@@ -6,6 +6,7 @@ Adhese.prototype.usersync = function(){
         url += "&gdpr=1&consentString="+this.config.consentString;
         iframe = document.createElement("iframe");
         iframe.src = url;
+        iframe.style.display = "none";
         document.body.appendChild(iframe);
     }else{
         this.helper.log("Can't find a consentstring, not usersyncing!")
