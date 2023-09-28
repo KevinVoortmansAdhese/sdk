@@ -1,5 +1,5 @@
 Adhese.prototype.addObserver = function (type, callback){
-    this.helper.log("************************************ ADDING "+type.toUpperCase()+" OBSERVER *******************************************************");
+    this.helper.log("************************************ PREPARING AN "+type.toUpperCase()+" OBSERVER *******************************************************");
     let options = {
         root: null, // relative to document viewport 
         rootMargin: '200px', // margin around root. Values are similar to css property. Unitless values not allowed 
@@ -16,15 +16,19 @@ Adhese.prototype.addObserver = function (type, callback){
 Adhese.prototype.observeAds = function(ads){
     this.addObserver("ad", this.lazyRenderAds)
     for(div_name in ads){
-        if(!ads[div_name].options.lazyRequest){
-            if(!ads[div_name].options.disableLazyRender){
-                this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
-                var destination = document.getElementById(div_name);
-                this.observers.ad.observe(destination);
-            }else{
-                this.helper.log("Lazy Rendering disabled for "+div_name+" position. Rendering the ad!");
-                this.renderAd(ads[div_name]);
+        if (typeof ads[div_name].ToRenderAd !== "undefined"){
+            if(!ads[div_name].options.lazyRequest){
+                if(!ads[div_name].options.disableLazyRender){
+                    this.helper.log("enabled an obverser for: " + div_name + " Rendering ad when div becomes visible.");
+                    var destination = document.getElementById(div_name);
+                    this.observers.ad.observe(destination);
+                }else{
+                    this.helper.log("Lazy Rendering disabled for "+div_name+" position. Rendering the ad!");
+                    this.renderAd(ads[div_name]);
+                }
             }
+        }else{
+            this.helper.log("No Ad found for "+div_name+"! Not setting up an observer");
         }
     }
 }

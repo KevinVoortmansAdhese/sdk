@@ -48,7 +48,10 @@
 
  	this.config.jquery =  typeof jQuery !== 'undefined';
 
- 	if (options.account) {
+	this.config.consent = typeof options.consent !== "undefined" ? options.consent : false;
+	this.registerRequestParameter('tl', this.config.consent ? "all" : "none");
+
+	if (options.account) {
  		this.config.account = options.account;
  		var protocol = "https:";
  		if (window.location.protocol != "file:") {
@@ -113,7 +116,9 @@
  		this.registerRequestParameter('br', this.userAgent[p]);
  	}
   	if(typeof(this.Detection) === "function"){
-      	this.registerRequestParameter('dt', this.detection.device());
+		this.config.device = this.detection.device()
+		this.helper.log("The device you are using is: "+this.config.device)
+      	this.registerRequestParameter('dt', this.config.device);
       	this.registerRequestParameter('br', this.detection.device());
   	}
 
@@ -128,6 +133,11 @@
 				this.registerRequestParameter(key, options.parameters[key]);
 			}
 		}
+	}
+
+	if(options.breakpoints) {
+		this.config.breakpoints = options.breakpoints;
+		this.config.currentBreakpoint = this.findBreakpoint(options.breakpoints);
 	}
 
     this.config.previewExclusive = false;
@@ -393,4 +403,15 @@ Adhese.prototype.registerResponse = function(key, ad) {
  */
 Adhese.prototype.logSafeframeMessages = function(id,status,data) {
 	this.helper.log(id,status,data);
+}
+
+Adhese.prototype.findBreakpoint = function (breakpoints){
+	let viewportWidth = window.innerWidth;
+	let sortedBreakpoints = Object.keys(breakpoints).sort((a, b) => b - a);
+	for (let i = 0; i <= sortedBreakpoints.length ; i++) {
+		if (viewportWidth >= sortedBreakpoints[i] || i === sortedBreakpoints.length - 1) {
+			this.helper.log(" The following Breakpoint was found "+ breakpoints[sortedBreakpoints[i]]);
+			return breakpoints[sortedBreakpoints[i]];
+		}
+	}
 }

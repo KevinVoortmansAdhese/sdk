@@ -1,9 +1,21 @@
+Adhese.prototype.getFormat = function (slot){
+    if (typeof this.config.currentBreakpoint !== "undefined"){
+        if (typeof slot.dataset[this.config.currentBreakpoint+"Format"] !== "undefined"){
+            return slot.dataset[this.config.currentBreakpoint+"Format"];
+        }else {
+            return typeof slot.dataset.format !== "undefined" ? slot.dataset.format : slot.dataset[this.config.device+"Format"];
+        }
+    }else {
+        return typeof slot.dataset.format !== "undefined" ? slot.dataset.format : slot.dataset[this.config.device+"Format"];
+    }
+}
+
 Adhese.prototype.FindSlots = function(options) {
     this.helper.log("----------------------------------- Finding Adslots on the page -------------------------------------------------");
     let slots = document.querySelectorAll(".adunit");
     for(x=0; x< slots.length; x++){
-        const format = slots[x].dataset.format;
-        const slot = slots[x].dataset.slot !== undefined ? slots[x].dataset.slot : this.CountSlot(slots[x].dataset.format);
+        const format = this.getFormat(slots[x]);
+        const slot = slots[x].dataset.slot !== undefined ? slots[x].dataset.slot : this.CountSlot(format);
         const slot_id = format + "_" + slot
         options.containingElementID = this.createSlotDestination(slots[x], slot_id);
         options.loaded = false;
@@ -17,8 +29,8 @@ Adhese.prototype.FindSlots = function(options) {
             previewAd.previewUrl = this.config.previewHost + "/creatives/preview/json/tag.do?id=" + this.previewFormats[format].creative + "&slotId=" + this.previewFormats[format].slot;
             previewAd.width = this.previewFormats[format].width;
             previewAd.height = this.previewFormats[format].height;
-            this.previewAds[slots[x].dataset.format + "_" + slot] = previewAd;
-            this.helper.log("Preview Required for slot: "+ slots[x].dataset.format + "_" + slot + "with settings;", previewAd)
+            this.previewAds[format + "_" + slot] = previewAd;
+            this.helper.log("Preview Required for slot: "+ format + "_" + slot + "with settings;", previewAd)
         }else{
             //COMPLETE NORMAL SETTINGS
             options.position = typeof slots[x].dataset.slot !== "undefined" ? slots[x].dataset.slot : "";
@@ -30,22 +42,22 @@ Adhese.prototype.FindSlots = function(options) {
             if (typeof slots[x].dataset.maxads !== "undefined" && slots[x].dataset.maxads){
                 if(typeof this.StackAd !== "undefined"){
                     if(typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true"){
-                        this.stackAds.lazyRequest[slots[x].dataset.format + "_" + slot] = new this.StackAd(this, slots[x].dataset.format, options, slots[x].dataset.maxads);
-                        this.helper.log("Stack Ad Slot Found for Lazy Requesting with settings:", this.stackAds.lazyRequest[slots[x].dataset.format + "_" + slot])
+                        this.stackAds.lazyRequest[format + "_" + slot] = new this.StackAd(this, format, options, slots[x].dataset.maxads);
+                        this.helper.log("Stack Ad Slot Found for Lazy Requesting with settings:", this.stackAds.lazyRequest[format + "_" + slot])
                     }else{
-                        this.stackAds.initRequest[slots[x].dataset.format + "_" + slot] = new this.StackAd(this, slots[x].dataset.format, options, slots[x].dataset.maxads);
-                        this.helper.log("Stack Ad Slot Found for Init requesting with settings:", this.stackAds.initRequest[slots[x].dataset.format + "_" + slot])
+                        this.stackAds.initRequest[format + "_" + slot] = new this.StackAd(this, format, options, slots[x].dataset.maxads);
+                        this.helper.log("Stack Ad Slot Found for Init requesting with settings:", this.stackAds.initRequest[format + "_" + slot])
                     }
                 }else{
                     this.helper.log("Stack Ads not enabled in this library. Contact Adhese support if you need this.");
                 }
             }else{
                 if(typeof slots[x].dataset.lazyrequest !== "undefined" && slots[x].dataset.lazyrequest === "true"){
-                    this.ads.lazyRequest[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
-                    this.helper.log("Slot Found for Lazy Requesting with settings:", this.ads.lazyRequest[slots[x].dataset.format + "_" + slot])
+                    this.ads.lazyRequest[format + "_" + slot] = new this.Ad(this, format, options);
+                    this.helper.log("Slot Found for Lazy Requesting with settings:", this.ads.lazyRequest[format + "_" + slot])
                 }else{
-                    this.ads.initRequest[slots[x].dataset.format + "_" + slot] = new this.Ad(this, slots[x].dataset.format, options);
-                    this.helper.log("Slot Found for Init requesting with settings:", this.ads.initRequest[slots[x].dataset.format + "_" + slot])
+                    this.ads.initRequest[format + "_" + slot] = new this.Ad(this, format, options);
+                    this.helper.log("Slot Found for Init requesting with settings:", this.ads.initRequest[format + "_" + slot])
                 }
             }
         }
